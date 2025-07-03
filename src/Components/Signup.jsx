@@ -14,7 +14,7 @@ const Signup = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     axios
-      .post(`https://mobile-inventory-management-system.vercel.app/register`, { name, email, password })
+      .post(`https://mims-backend-x0i3.onrender.com/register`, { name, email, password })
       .then(() => navigate("/login"))
       .catch((err) => console.error(err));
   };

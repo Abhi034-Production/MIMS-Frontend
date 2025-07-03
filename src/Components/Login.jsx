@@ -27,7 +27,7 @@ const Login = () => {
     }
 
     try {
-      const res = await axios.post(`https://mobile-inventory-management-system.vercel.app/login-with-otp`, {
+      const res = await axios.post(`https://mims-backend-x0i3.onrender.com/login-with-otp`, {
         email,
         password,
       });
@@ -50,7 +50,7 @@ const Login = () => {
     }
 
     try {
-      const res = await axios.post(`https://mobile-inventory-management-system.vercel.app/verify-login-otp`, {
+      const res = await axios.post(`https://mims-backend-x0i3.onrender.com/verify-login-otp`, {
         email,
         otp,
       });

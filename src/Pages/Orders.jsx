@@ -20,7 +20,7 @@ const Orders = () => {
 
   useEffect(() => {
     axios
-      .get(`https://mobile-inventory-management-system.vercel.app/bills`)
+      .get(`https://mims-backend-x0i3.onrender.com/bills`)
       .then((response) => {
         const sortedBills = response.data.sort(
           (a, b) => new Date(b.billDate) - new Date(a.billDate)

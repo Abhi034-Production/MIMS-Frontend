@@ -1,6 +1,3 @@
-
-
-
 import React, { useEffect, useState } from "react";
 import AdminLayout from "../Components/AdminLayout";
 import { Link, useNavigate } from "react-router-dom";
@@ -29,7 +26,7 @@ const Settings = () => {
     e.preventDefault();
 
     try {
-      const res = await axios.put(`https://mobile-inventory-management-system.vercel.app/update-admin`, {
+      const res = await axios.put(`https://mims-backend-x0i3.onrender.com/update-admin`, {
         email,
         name,
         password: newPassword,

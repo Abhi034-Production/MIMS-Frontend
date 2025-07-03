@@ -11,7 +11,7 @@ const Inventory = () => {
   const [editingProduct, setEditingProduct] = useState(null);
 
   useEffect(() => {
-    axios.get(`https://mobile-inventory-management-system.vercel.app/products`)
+    axios.get(`https://mims-backend-x0i3.onrender.com/products`)
       .then((response) => setProducts(response.data))
       .catch((error) => console.error("Error fetching products:", error));
   }, []);
@@ -19,7 +19,7 @@ const Inventory = () => {
   const addProduct = (e) => {
     e.preventDefault();
     if (newProduct.name && newProduct.quantity && newProduct.price) {
-      axios.post(`https://mobile-inventory-management-system.vercel.app/add-product`, newProduct)
+      axios.post(`https://mims-backend-x0i3.onrender.com/add-product`, newProduct)
         .then((response) => {
           setProducts([...products, response.data]);
           setNewProduct({ name: "", quantity: "", price: "" });
@@ -32,7 +32,7 @@ const Inventory = () => {
   };
 
   const deleteProduct = (id) => {
-    axios.delete(`https://mobile-inventory-management-system.vercel.app/delete-product/${id}`)
+    axios.delete(`https://mims-backend-x0i3.onrender.com/delete-product/${id}`)
       .then(() => {
         setProducts(products.filter((product) => product._id !== id));
       })
@@ -47,7 +47,7 @@ const Inventory = () => {
   const saveEditProduct = (e) => {
     e.preventDefault();
     if (editingProduct.name && editingProduct.quantity && editingProduct.price) {
-      axios.put(`https://mobile-inventory-management-system.vercel.app/update-product/${editingProduct._id}`, editingProduct)
+      axios.put(`https://mims-backend-x0i3.onrender.com/update-product/${editingProduct._id}`, editingProduct)
         .then((response) => {
           setProducts(products.map((product) =>
             product._id === editingProduct._id ? response.data : product

@@ -21,7 +21,7 @@ const Billing = () => {
 
   useEffect(() => {
     axios
-      .get(`https://mobile-inventory-management-system.vercel.app/products`)
+      .get(`https://mims-backend-x0i3.onrender.com/products`)
       .then((response) => setProducts(response.data))
       .catch((error) => console.error("Error fetching products:", error));
   }, []);
@@ -111,7 +111,7 @@ const Billing = () => {
     };
 
     try {
-      await axios.post(`https://mobile-inventory-management-system.vercel.app/save-bill`, billData);
+      await axios.post(`https://mims-backend-x0i3.onrender.com/save-bill`, billData);
       toast.success("Bill Saved & Share Successfully..!");
 
       handleShareWhatsApp();
