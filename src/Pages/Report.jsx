@@ -44,7 +44,7 @@ const Report = () => {
     }, 20000); 
 
     axios
-      .get(`https://mims-backend-x0i3.onrender.com/bills`)
+      .get(`http://localhost:3001/bills`)
       .then(({ data: bills }) => {
         setAllBills(bills);
 
@@ -152,8 +152,11 @@ const Report = () => {
         <div className="min-h-screen flex flex-col items-center justify-center text-gray-700 text-lg">
           {loadTimeoutExceeded ? (
             <div className="text-center">
-              <div className="mb-4">
-                <Loading />
+              <div className="mb-4 block m-auto">
+              
+                     <Loading />
+             
+              
               </div>
               {/* <button
                 className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
@@ -163,8 +166,10 @@ const Report = () => {
               </button> */}
             </div>
           ) : (
-            <div className="mb-4">
-                <Loading />
+            <div className="mb-4 block m-auto">
+           
+                  <Loading />
+           
             </div>
           )}
         </div>
