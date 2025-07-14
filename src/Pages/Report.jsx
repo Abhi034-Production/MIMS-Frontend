@@ -44,7 +44,7 @@ const Report = () => {
     }, 20000); 
 
     axios
-      .get(`http://localhost:3001/bills`)
+      .get(`https://mims-backend-x0i3.onrender.com/bills`)
       .then(({ data: bills }) => {
         setAllBills(bills);
 
