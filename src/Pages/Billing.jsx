@@ -1,4 +1,3 @@
-https://mims-backend-x0i3.onrender.com
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import AdminLayout from "../Components/AdminLayout";
