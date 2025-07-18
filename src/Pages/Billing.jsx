@@ -113,19 +113,9 @@ const shareInvoiceOnWhatsApp = async () => {
   if (buttonEl) buttonEl.style.display = "none";
 
   try {
-    // Step 1: Check if invoice is ready
-    if (!invoiceRef?.current) {
-      alert("Invoice not ready.");
-      throw new Error("Invoice reference is missing.");
-    }
-
-    alert("Generating invoice PDF...");
-
-    // Step 2: Convert invoice to canvas and then image
-    const canvas = await html2canvas(invoiceRef.current, { scale: 1.5 });
+    const canvas = await html2canvas(invoiceRef.current, { scale: 2 });
     const imgData = canvas.toDataURL("image/png");
 
-    // Step 3: Create PDF
     const pdf = new jsPDF("p", "mm", "a4");
     const pageWidth = pdf.internal.pageSize.getWidth();
     const imgProps = pdf.getImageProperties(imgData);
@@ -134,57 +124,46 @@ const shareInvoiceOnWhatsApp = async () => {
     pdf.addImage(imgData, "PNG", 0, 0, pageWidth, pdfHeight);
     const pdfBlob = pdf.output("blob");
 
-    alert("Uploading to Uploadfiles.io...");
-
-    // Step 4: Upload to Uploadfiles.io
     const formData = new FormData();
-    formData.append("file", pdfBlob, "invoice.pdf");
+    formData.append("file", pdfBlob, `Invoice_${selectedBill._id}.pdf`);
 
-    const response = await fetch("https://api.uploadfiles.io/upload", {
+    // Upload to tmpfiles.org
+    const response = await fetch("https://tmpfiles.org/api/v1/upload", {
       method: "POST",
       body: formData,
     });
 
-    const result = await response.json();
-    if (!result || !result.data || !result.data.file) {
-      alert("Upload failed. Try again.");
-      throw new Error("Invalid Uploadfiles.io response");
+    const data = await response.json();
+
+    if (!data?.data?.url) {
+      toast.error("Failed to upload invoice");
+      if (buttonEl) buttonEl.style.display = "flex";
+      return;
     }
 
-    const invoiceURL = result.data.file.url;
+    const invoiceURL = data.data.url;
 
-    alert("Upload successful!");
-
-    // Step 5: Prepare WhatsApp message
     const name = selectedBill?.customer?.name || "Customer";
     let mobile = selectedBill?.customer?.mobile || "";
-    mobile = mobile.replace(/\D/g, "");
+    mobile = mobile.replace(/\D/g, ""); // remove non-digits
     if (!mobile.startsWith("91")) mobile = "91" + mobile;
-
-    if (!mobile || mobile.length < 10) {
-      alert("Invalid mobile number.");
-      throw new Error("Invalid mobile number.");
-    }
 
     const message = `Hello ${name}, here is your invoice:\n${invoiceURL}`;
     const whatsappLink = `https://wa.me/${mobile}?text=${encodeURIComponent(message)}`;
 
-    alert("Opening WhatsApp...");
-
-    // Step 6: Open WhatsApp in new tab
+    // Try safe method: Create <a> element and trigger click
     const a = document.createElement("a");
     a.href = whatsappLink;
     a.target = "_blank";
     a.rel = "noopener noreferrer";
     document.body.appendChild(a);
-    setTimeout(() => {
-      a.click();
-      document.body.removeChild(a);
-    }, 300);
+    a.click();
+    document.body.removeChild(a);
 
+    // Also show fallback link
     toast.info(
       <span>
-        If WhatsApp didn’t open,{" "}
+        If WhatsApp didn't open,{" "}
         <a href={whatsappLink} target="_blank" rel="noopener noreferrer" style={{ color: 'blue', textDecoration: 'underline' }}>
           click here
         </a>{" "}
@@ -192,11 +171,10 @@ const shareInvoiceOnWhatsApp = async () => {
       </span>
     );
 
-    toast.success("Invoice uploaded and WhatsApp link generated.");
+    toast.success("Invoice uploaded. WhatsApp opened.");
   } catch (err) {
-    console.error("Error sharing invoice:", err);
-    alert("Something went wrong: " + (err?.message || "Unknown error"));
-    toast.error("Failed to share invoice.");
+    console.error("Error sharing on WhatsApp:", err);
+    alert("Error sharing on WhatsApp.");
   } finally {
     if (buttonEl) buttonEl.style.display = "flex";
   }
