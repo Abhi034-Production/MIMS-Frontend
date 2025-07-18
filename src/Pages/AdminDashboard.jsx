@@ -12,6 +12,8 @@ import {
   MdOutlineHome,
 } from "react-icons/md";
 import { format, parseISO } from "date-fns";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const AdminDashboard = () => {
   const [summaryData, setSummaryData] = useState({
@@ -25,6 +27,7 @@ const AdminDashboard = () => {
   const [topProducts, setTopProducts] = useState([]);
   const [monthlyTarget, setMonthlyTarget] = useState(50000);
   const [achievementBadges, setAchievementBadges] = useState([]);
+  const [lowStock, setLowStock] = useState([]);
 
   useEffect(() => {
     axios.get(`https://mims-backend-x0i3.onrender.com/bills`)
@@ -33,25 +36,16 @@ const AdminDashboard = () => {
         const now = new Date();
         const currentMonth = format(now, "yyyy-MM");
 
-        // Filter bills for current month
         const monthlyBills = bills.filter((bill) => {
           const billDate = parseISO(bill.billDate);
           return format(billDate, "yyyy-MM") === currentMonth;
         });
 
-        // Total revenue all-time
         const totalRevenue = bills.reduce((sum, bill) => sum + bill.total, 0);
-
-        // Monthly revenue
         const monthlyRevenue = monthlyBills.reduce((sum, bill) => sum + bill.total, 0);
-
-        // Customers in the month
         const totalCustomers = new Set(monthlyBills.map((bill) => bill.customer?.email)).size;
-
-        // Orders count this month
         const totalOrders = monthlyBills.length;
 
-        // Monthly dynamic sales target 
         const dynamicMonthlyTarget = Math.ceil(monthlyRevenue / 50000) * 50000 || 50000;
 
         setMonthlyTarget(dynamicMonthlyTarget);
@@ -63,7 +57,6 @@ const AdminDashboard = () => {
           totalProducts: "10+",
         });
 
-        // Monthly product sales
         const productSales = {};
         monthlyBills.forEach((bill) => {
           bill.order.forEach((item) => {
@@ -82,16 +75,35 @@ const AdminDashboard = () => {
 
         setTopProducts(topSelling);
 
-        // Badges for every ₹50,000 milestone in monthly revenue
         const badges = Array.from({ length: Math.floor(monthlyRevenue / 50000) }, (_, i) => `₹${(i + 1) * 50000} Achieved`);
         setAchievementBadges(badges);
       })
       .catch((error) => console.error("Error fetching data:", error));
+
+    // Fetch low stock products
+    axios.get(`https://mims-backend-x0i3.onrender.com/products`)
+      .then((response) => {
+        const lowStockProducts = response.data.filter((product) => product.quantity < 5);
+        setLowStock(lowStockProducts);
+      })
+      .catch((err) => console.error("Error fetching products:", err));
   }, []);
+
+  const downloadLowStockPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Low Stock Inventory Report", 14, 15);
+
+    autoTable(doc, {
+      startY: 25,
+      head: [["Product Name", "Quantity", "Price"]],
+      body: lowStock.map(item => [item.name, item.quantity, `₹${item.price}`]),
+    });
+
+    doc.save("low_stock_inventory.pdf");
+  };
 
   return (
     <AdminLayout>
-      {/* Breadcrumbs */}
       <div className="text-sm text-gray-600 mb-4">
         <nav className="flex items-center space-x-2">
           <span className="text-gray-500"><Link to="/home"><MdOutlineHome fontSize={20} /></Link></span>
@@ -101,7 +113,6 @@ const AdminDashboard = () => {
       </div>
 
       <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
-        {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {[
             {
@@ -140,30 +151,22 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-
-        {/* Monthly Sales Target Progress - Clean & Responsive */}
-        <div className="p-6 bg-white rounded-3xl shadow  transition-all duration-300 mb-10">
+        {/* Monthly Sales Target Progress */}
+        <div className="p-6 bg-white rounded-3xl shadow transition-all duration-300 mb-10">
           <div className="flex items-center gap-3 mb-5">
             <MdTrendingUp className="text-3xl text-indigo-600" />
             <h2 className="text-xl font-bold text-gray-800">🎯 Monthly Sales Target Progress</h2>
           </div>
 
-          {/* Progress Bar */}
           <div className="relative w-full h-6 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full overflow-hidden shadow-inner">
             <div
               className="absolute top-0 left-0 h-full bg-gradient-to-r from-indigo-500 via-blue-500 to-sky-500 rounded-full shadow-md transition-all duration-700 ease-in-out"
               style={{
                 width: `${Math.min((summaryData.monthlyRevenue / monthlyTarget) * 100, 100)}%`,
               }}
-            >
-
-            </div>
-
+            />
           </div>
 
-
-
-          {/* Status */}
           <div className="mt-4 flex flex-col sm:flex-row items-center justify-between text-sm gap-2">
             <p className="text-gray-700 font-semibold">
               <span className="text-base font-bold text-indigo-600">₹{summaryData.monthlyRevenue.toLocaleString()}</span>{" "}
@@ -201,6 +204,37 @@ const AdminDashboard = () => {
             </ul>
           ) : (
             <p className="text-sm text-gray-500">No sales data available for this month.</p>
+          )}
+        </div>
+
+        {/* Low Stock Inventory */}
+        <div className="p-6 bg-white rounded-2xl shadow hover:shadow-lg transition duration-300 mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <MdInventory className="text-2xl text-red-600" />
+              <h2 className="text-lg font-semibold text-gray-700">Low Stock Inventory (Less than 5)</h2>
+            </div>
+            {lowStock.length > 0 && (
+              <button
+                onClick={downloadLowStockPDF}
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md text-sm"
+              >
+                📄 Download PDF
+              </button>
+            )}
+          </div>
+
+          {lowStock.length > 0 ? (
+            <ul className="divide-y divide-gray-200">
+              {lowStock.map((product, index) => (
+                <li key={index} className="flex justify-between py-3 text-gray-700">
+                  <span>{product.name}</span>
+                  <span className="text-sm">Qty: {product.quantity} | ₹{product.price}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-500">All inventory is sufficiently stocked.</p>
           )}
         </div>
       </div>
