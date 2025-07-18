@@ -112,9 +112,14 @@ const Billing = () => {
   if (buttonEl) buttonEl.style.display = "none";
 
   try {
+    // Check if invoice is ready
+    if (!invoiceRef?.current) throw new Error("Invoice not ready for sharing.");
+
+    // Convert invoice HTML to canvas and then to image
     const canvas = await html2canvas(invoiceRef.current, { scale: 2 });
     const imgData = canvas.toDataURL("image/png");
 
+    // Generate PDF from image
     const pdf = new jsPDF("p", "mm", "a4");
     const pageWidth = pdf.internal.pageSize.getWidth();
     const imgProps = pdf.getImageProperties(imgData);
@@ -123,44 +128,46 @@ const Billing = () => {
     pdf.addImage(imgData, "PNG", 0, 0, pageWidth, pdfHeight);
     const pdfBlob = pdf.output("blob");
 
-    // Upload to transfer.sh
-    const response = await fetch("https://transfer.sh/Invoice.pdf", {
+    // Upload to tmpfiles.org
+    const formData = new FormData();
+    formData.append("file", pdfBlob, "invoice.pdf");
+
+    const response = await fetch("https://tmpfiles.org/api/v1/upload", {
       method: "POST",
-      body: pdfBlob,
-      headers: {
-        "Content-Type": "application/pdf",
-      },
+      body: formData,
     });
 
     if (!response.ok) {
-      toast.error("Failed to upload invoice to Transfer.sh");
-      if (buttonEl) buttonEl.style.display = "flex";
-      return;
+      throw new Error("Failed to upload invoice to tmpfiles.org");
     }
 
-    const invoiceURL = await response.text(); // plain URL
+    const data = await response.json();
+    const invoiceURL = `https://tmpfiles.org/${data.data.id}`;
 
+    // Prepare WhatsApp message
     const name = selectedBill?.customer?.name || "Customer";
     let mobile = selectedBill?.customer?.mobile || "";
-    mobile = mobile.replace(/\D/g, ""); // remove non-digits
+    mobile = mobile.replace(/\D/g, "");
     if (!mobile.startsWith("91")) mobile = "91" + mobile;
 
     const message = `Hello ${name}, here is your invoice:\n${invoiceURL}`;
     const whatsappLink = `https://wa.me/${mobile}?text=${encodeURIComponent(message)}`;
 
-    // Open WhatsApp using <a> to bypass popup blockers
+    // Open WhatsApp
     const a = document.createElement("a");
     a.href = whatsappLink;
     a.target = "_blank";
     a.rel = "noopener noreferrer";
     document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    setTimeout(() => {
+      a.click();
+      document.body.removeChild(a);
+    }, 300);
 
-    // Manual fallback link if needed
+    // Fallback info
     toast.info(
       <span>
-        If WhatsApp didn't open,{" "}
+        If WhatsApp didn’t open,{" "}
         <a href={whatsappLink} target="_blank" rel="noopener noreferrer" style={{ color: 'blue', textDecoration: 'underline' }}>
           click here
         </a>{" "}
@@ -171,7 +178,8 @@ const Billing = () => {
     toast.success("Invoice uploaded and WhatsApp opened.");
   } catch (err) {
     console.error("Error sharing on WhatsApp:", err);
-    alert("Error sharing on WhatsApp.");
+    alert("Error sharing on WhatsApp: " + (err?.message || "Unknown error"));
+    toast.error("Failed to share invoice.");
   } finally {
     if (buttonEl) buttonEl.style.display = "flex";
   }
