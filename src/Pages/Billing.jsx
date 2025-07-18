@@ -108,6 +108,12 @@ const Billing = () => {
 
 
   
+
+
+
+
+
+
 const shareInvoiceOnWhatsApp = async () => {
   const buttonEl = document.querySelector("#invoice-actions");
   if (buttonEl) buttonEl.style.display = "none";
@@ -127,21 +133,21 @@ const shareInvoiceOnWhatsApp = async () => {
     const formData = new FormData();
     formData.append("file", pdfBlob, `Invoice_${selectedBill._id}.pdf`);
 
-    // Upload to tmpfiles.org
-    const response = await fetch("https://tmpfiles.org/api/v1/upload", {
+    // Upload to file.io with 2-day expiration
+    const response = await fetch("https://file.io/?expires=2d", {
       method: "POST",
       body: formData,
     });
 
     const data = await response.json();
 
-    if (!data?.data?.url) {
+    if (!data?.success || !data?.link) {
       toast.error("Failed to upload invoice");
       if (buttonEl) buttonEl.style.display = "flex";
       return;
     }
 
-    const invoiceURL = data.data.url;
+    const invoiceURL = data.link;
 
     const name = selectedBill?.customer?.name || "Customer";
     let mobile = selectedBill?.customer?.mobile || "";
