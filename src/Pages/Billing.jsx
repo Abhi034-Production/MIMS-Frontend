@@ -30,6 +30,140 @@ const Billing = () => {
     setBillDate(now.toISOString().slice(0, 16));
   }, []);
 
+
+
+
+
+
+  
+const shareInvoiceOnWhatsApp = async () => {
+  const buttonEl = document.querySelector("#invoice-actions");
+  if (buttonEl) buttonEl.style.display = "none";
+
+  try {
+    // 1. Generate PDF with fallback for html2canvas errors
+    let pdfBlob;
+    try {
+      const canvas = await html2canvas(invoiceRef.current, {
+        scale: 2,
+        useCORS: true, // Enable CORS for images
+        allowTaint: true // Allow tainted canvas
+      });
+      const imgData = canvas.toDataURL("image/png");
+      
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
+      
+      pdf.addImage(imgData, "PNG", 0, 0, pageWidth, pdfHeight);
+      pdfBlob = pdf.output("blob");
+    } catch (canvasError) {
+      console.error("Canvas generation error:", canvasError);
+      throw new Error("Could not generate invoice image. Please try again.");
+    }
+
+    // 2. Upload with multiple fallback options
+    let invoiceURL;
+    const filename = `Invoice_${selectedBill._id}.pdf`;
+    
+    // Try Transfer.sh first
+    try {
+      const response = await fetch(`https://transfer.sh/${filename}`, {
+        method: "PUT",
+        body: pdfBlob,
+        headers: {
+          "Content-Type": "application/pdf"
+        }
+      });
+
+      if (!response.ok) throw new Error(`Transfer.sh upload failed: ${response.status}`);
+      invoiceURL = await response.text();
+    } catch (transferError) {
+      console.warn("Transfer.sh failed, trying File.io:", transferError);
+      
+      // Fallback to File.io
+      const formData = new FormData();
+      formData.append("file", pdfBlob, filename);
+      
+      const fileIoResponse = await fetch("https://file.io", {
+        method: "POST",
+        body: formData,
+      });
+      
+      const fileIoData = await fileIoResponse.json();
+      if (!fileIoData?.link) throw new Error("Both upload services failed");
+      invoiceURL = fileIoData.link;
+    }
+
+    // 3. Prepare WhatsApp message
+    const name = selectedBill?.customer?.name || "Customer";
+    let mobile = selectedBill?.customer?.mobile?.toString() || "";
+    mobile = mobile.replace(/\D/g, "");
+    
+    // Validate mobile number
+    if (!mobile) throw new Error("No mobile number provided");
+    if (!mobile.startsWith("91")) mobile = "91" + mobile;
+    if (mobile.length !== 12) throw new Error("Invalid mobile number");
+
+    const message = `Hello ${name}, here is your invoice:\n${invoiceURL}`;
+    const whatsappLink = `https://wa.me/${mobile}?text=${encodeURIComponent(message)}`;
+
+    // 4. Open WhatsApp with multiple approaches
+    try {
+      // Method 1: window.open
+      const newWindow = window.open(whatsappLink, "_blank", "noopener,noreferrer");
+      
+      // Fallback if popup blocked
+      if (!newWindow || newWindow.closed || typeof newWindow.closed === "undefined") {
+        // Method 2: Create temporary link
+        const a = document.createElement("a");
+        a.href = whatsappLink;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => document.body.removeChild(a), 100);
+      }
+    } catch (windowError) {
+      console.error("Window open failed:", windowError);
+      // Final fallback - show clickable link
+      toast.info(
+        <span>
+          Please <a href={whatsappLink} target="_blank" rel="noopener noreferrer" 
+            style={{color: 'blue', textDecoration: 'underline'}}>
+            click here
+          </a> to send the invoice manually.
+        </span>,
+        { autoClose: false }
+      );
+    }
+
+    toast.success("Invoice shared successfully!");
+
+  } catch (err) {
+    console.error("Error sharing invoice:", err);
+    toast.error(err.message || "Failed to share invoice");
+    
+    // Detailed error for debugging
+    if (process.env.NODE_ENV === "development") {
+      toast.info(`Technical details: ${err.toString()}`);
+    }
+  } finally {
+    if (buttonEl) buttonEl.style.display = "flex";
+  }
+};
+
+
+
+
+
+
+
+
+
+  
+
   const fetchRecentBills = () => {
     axios.get(`https://mims-backend-x0i3.onrender.com/bills`)
       .then((res) => {
@@ -119,71 +253,71 @@ const Billing = () => {
 
 
 
-const shareInvoiceOnWhatsApp = async () => {
-  const buttonEl = document.querySelector("#invoice-actions");
-  if (buttonEl) buttonEl.style.display = "none";
+// const shareInvoiceOnWhatsApp = async () => {
+//   const buttonEl = document.querySelector("#invoice-actions");
+//   if (buttonEl) buttonEl.style.display = "none";
 
-  try {
-    // Generate PDF
-    const canvas = await html2canvas(invoiceRef.current, { scale: 2 });
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF("p", "mm", "a4");
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
-    pdf.addImage(imgData, "PNG", 0, 0, pageWidth, pdfHeight);
-    const pdfBlob = pdf.output("blob");
+//   try {
+//     // Generate PDF
+//     const canvas = await html2canvas(invoiceRef.current, { scale: 2 });
+//     const imgData = canvas.toDataURL("image/png");
+//     const pdf = new jsPDF("p", "mm", "a4");
+//     const pageWidth = pdf.internal.pageSize.getWidth();
+//     const imgProps = pdf.getImageProperties(imgData);
+//     const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
+//     pdf.addImage(imgData, "PNG", 0, 0, pageWidth, pdfHeight);
+//     const pdfBlob = pdf.output("blob");
 
-    // Upload to Transfer.sh
-    const filename = `Invoice_${selectedBill._id}.pdf`;
-    const response = await fetch(`https://transfer.sh/${filename}`, {
-      method: "PUT",
-      body: pdfBlob,
-      headers: {
-        "Content-Type": "application/pdf"
-      }
-    });
+//     // Upload to Transfer.sh
+//     const filename = `Invoice_${selectedBill._id}.pdf`;
+//     const response = await fetch(`https://transfer.sh/${filename}`, {
+//       method: "PUT",
+//       body: pdfBlob,
+//       headers: {
+//         "Content-Type": "application/pdf"
+//       }
+//     });
 
-    if (!response.ok) {
-      throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
-    }
+//     if (!response.ok) {
+//       throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+//     }
 
-    const invoiceURL = await response.text();
+//     const invoiceURL = await response.text();
 
-    // Prepare WhatsApp message
-    const name = selectedBill?.customer?.name || "Customer";
-    let mobile = selectedBill?.customer?.mobile?.toString() || "";
-    mobile = mobile.replace(/\D/g, "");
-    if (mobile && !mobile.startsWith("91")) mobile = "91" + mobile;
+//     // Prepare WhatsApp message
+//     const name = selectedBill?.customer?.name || "Customer";
+//     let mobile = selectedBill?.customer?.mobile?.toString() || "";
+//     mobile = mobile.replace(/\D/g, "");
+//     if (mobile && !mobile.startsWith("91")) mobile = "91" + mobile;
 
-    const message = `Hello ${name}, here is your invoice:\n${invoiceURL}`;
-    const whatsappLink = `https://wa.me/${mobile}?text=${encodeURIComponent(message)}`;
+//     const message = `Hello ${name}, here is your invoice:\n${invoiceURL}`;
+//     const whatsappLink = `https://wa.me/${mobile}?text=${encodeURIComponent(message)}`;
 
-    // Open WhatsApp
-    window.open(whatsappLink, "_blank", "noopener,noreferrer");
+//     // Open WhatsApp
+//     window.open(whatsappLink, "_blank", "noopener,noreferrer");
 
-    // Show success notification
-    toast.success(
-      <span>
-        Invoice shared successfully! If WhatsApp didn't open,{" "}
-        <a 
-          href={whatsappLink} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          style={{ color: 'blue', textDecoration: 'underline' }}
-        >
-          click here
-        </a>.
-      </span>
-    );
+//     // Show success notification
+//     toast.success(
+//       <span>
+//         Invoice shared successfully! If WhatsApp didn't open,{" "}
+//         <a 
+//           href={whatsappLink} 
+//           target="_blank" 
+//           rel="noopener noreferrer"
+//           style={{ color: 'blue', textDecoration: 'underline' }}
+//         >
+//           click here
+//         </a>.
+//       </span>
+//     );
 
-  } catch (err) {
-    console.error("Error sharing invoice:", err);
-    toast.error(`Failed to share invoice: ${err.message}`);
-  } finally {
-    if (buttonEl) buttonEl.style.display = "flex";
-  }
-};
+//   } catch (err) {
+//     console.error("Error sharing invoice:", err);
+//     toast.error(`Failed to share invoice: ${err.message}`);
+//   } finally {
+//     if (buttonEl) buttonEl.style.display = "flex";
+//   }
+// };
 
 
 
