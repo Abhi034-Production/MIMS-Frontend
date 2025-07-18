@@ -107,21 +107,22 @@ const Billing = () => {
 
 
 
-  const shareInvoiceOnWhatsApp = async () => {
+  
+const shareInvoiceOnWhatsApp = async () => {
   const buttonEl = document.querySelector("#invoice-actions");
   if (buttonEl) buttonEl.style.display = "none";
 
   try {
-    // Step 1: Check invoice ready
+    // Step 1: Check if invoice is ready
     if (!invoiceRef?.current) {
-      alert("Invoice is not ready yet.");
-      throw new Error("Invoice reference missing.");
+      alert("Invoice not ready.");
+      throw new Error("Invoice reference is missing.");
     }
 
-    alert("Generating your invoice...");
+    alert("Generating invoice PDF...");
 
-    // Step 2: Convert invoice to canvas then image
-    const canvas = await html2canvas(invoiceRef.current, { scale: 2 });
+    // Step 2: Convert invoice to canvas and then image
+    const canvas = await html2canvas(invoiceRef.current, { scale: 1.5 });
     const imgData = canvas.toDataURL("image/png");
 
     // Step 3: Create PDF
@@ -133,41 +134,36 @@ const Billing = () => {
     pdf.addImage(imgData, "PNG", 0, 0, pageWidth, pdfHeight);
     const pdfBlob = pdf.output("blob");
 
-    alert("Uploading invoice to GoFile...");
+    alert("Uploading to Uploadfiles.io...");
 
-    // Step 4: Upload to GoFile.io
+    // Step 4: Upload to Uploadfiles.io
     const formData = new FormData();
     formData.append("file", pdfBlob, "invoice.pdf");
 
-    const uploadRes = await fetch("https://store1.gofile.io/uploadFile", {
+    const response = await fetch("https://api.uploadfiles.io/upload", {
       method: "POST",
       body: formData,
     });
 
-    if (!uploadRes.ok) {
-      alert("Upload to GoFile failed.");
-      throw new Error("Failed to upload to GoFile");
+    const result = await response.json();
+    if (!result || !result.data || !result.data.file) {
+      alert("Upload failed. Try again.");
+      throw new Error("Invalid Uploadfiles.io response");
     }
 
-    const uploadData = await uploadRes.json();
-    const invoiceURL = uploadData?.data?.downloadPage;
+    const invoiceURL = result.data.file.url;
 
-    if (!invoiceURL) {
-      alert("GoFile did not return a valid link.");
-      throw new Error("Invalid GoFile response");
-    }
+    alert("Upload successful!");
 
-    alert("Invoice uploaded successfully!");
-
-    // Step 5: Format WhatsApp message
+    // Step 5: Prepare WhatsApp message
     const name = selectedBill?.customer?.name || "Customer";
     let mobile = selectedBill?.customer?.mobile || "";
     mobile = mobile.replace(/\D/g, "");
     if (!mobile.startsWith("91")) mobile = "91" + mobile;
 
     if (!mobile || mobile.length < 10) {
-      alert("Invalid or missing mobile number.");
-      throw new Error("Invalid mobile number");
+      alert("Invalid mobile number.");
+      throw new Error("Invalid mobile number.");
     }
 
     const message = `Hello ${name}, here is your invoice:\n${invoiceURL}`;
@@ -186,7 +182,6 @@ const Billing = () => {
       document.body.removeChild(a);
     }, 300);
 
-    // Step 7: Manual fallback
     toast.info(
       <span>
         If WhatsApp didn’t open,{" "}
@@ -197,16 +192,18 @@ const Billing = () => {
       </span>
     );
 
-    alert("WhatsApp opened. If not, use the manual link shown.");
-    toast.success("Invoice uploaded and WhatsApp message sent.");
+    toast.success("Invoice uploaded and WhatsApp link generated.");
   } catch (err) {
-    console.error("Error sharing on WhatsApp:", err);
+    console.error("Error sharing invoice:", err);
     alert("Something went wrong: " + (err?.message || "Unknown error"));
     toast.error("Failed to share invoice.");
   } finally {
     if (buttonEl) buttonEl.style.display = "flex";
   }
 };
+
+
+
 
 
 
