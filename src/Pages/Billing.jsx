@@ -21,7 +21,7 @@ const Billing = () => {
   const invoiceRef = useRef(null);
 
   useEffect(() => {
-    axios.get(`http://localhost:3001/products`)
+    axios.get(`https://mims-backend-x0i3.onrender.com/products`)
       .then((res) => setProducts(res.data))
       .catch((err) => console.error("Error fetching products:", err));
   }, []);
@@ -32,7 +32,7 @@ const Billing = () => {
   }, []);
 
   const fetchRecentBills = () => {
-    axios.get(`http://localhost:3001/bills`)
+    axios.get(`https://mims-backend-x0i3.onrender.com/bills`)
       .then((res) => {
         const sorted = res.data.sort((a, b) => new Date(b.billDate) - new Date(a.billDate));
         setRecentBills(sorted.slice(0, 4));
@@ -226,7 +226,7 @@ const Billing = () => {
     };
 
     try {
-      await axios.post(`http://localhost:3001/save-bill`, billData);
+      await axios.post(`https://mims-backend-x0i3.onrender.com/save-bill`, billData);
       toast.success("Bill Saved Successfully!");
       setCustomer({ name: "", mobile: "", email: "" });
       setOrder([]);
