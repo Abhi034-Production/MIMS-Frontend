@@ -104,61 +104,82 @@ const Billing = () => {
       closeModal();
     });
   };
+
+
+
   const shareInvoiceOnWhatsApp = async () => {
-    const buttonEl = document.querySelector("#invoice-actions");
-    if (buttonEl) buttonEl.style.display = "none";
+  const buttonEl = document.querySelector("#invoice-actions");
+  if (buttonEl) buttonEl.style.display = "none";
 
-    try {
-      const canvas = await html2canvas(invoiceRef.current, { scale: 2 });
-      const imgData = canvas.toDataURL("image/png");
+  try {
+    const canvas = await html2canvas(invoiceRef.current, { scale: 2 });
+    const imgData = canvas.toDataURL("image/png");
 
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
 
-      pdf.addImage(imgData, "PNG", 0, 0, pageWidth, pdfHeight);
-      const pdfBlob = pdf.output("blob");
+    pdf.addImage(imgData, "PNG", 0, 0, pageWidth, pdfHeight);
+    const pdfBlob = pdf.output("blob");
 
-      const formData = new FormData();
-      formData.append("file", pdfBlob, `Invoice_${selectedBill._id}.pdf`);
+    // Upload to transfer.sh
+    const response = await fetch("https://transfer.sh/Invoice.pdf", {
+      method: "POST",
+      body: pdfBlob,
+      headers: {
+        "Content-Type": "application/pdf",
+      },
+    });
 
-      // Upload to tmpfiles.org
-      const response = await fetch("https://tmpfiles.org/api/v1/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (!data?.data?.url) {
-        toast.error("Failed to upload invoice");
-        if (buttonEl) buttonEl.style.display = "flex";
-        return;
-      }
-
-      const invoiceURL = data.data.url;
-
-      const name = selectedBill?.customer?.name || "Customer";
-      let mobile = selectedBill?.customer?.mobile || "";
-      mobile = mobile.replace(/\D/g, ""); // remove non-digits
-      if (!mobile.startsWith("91")) mobile = "91" + mobile;
-
-      const message = `Hello ${name}, here is your invoice:\n${invoiceURL}`;
-      const whatsappLink = `https://wa.me/${mobile}?text=${encodeURIComponent(message)}`;
-
-      // This is the only guaranteed working method
-      window.open(whatsappLink, "_blank");
-
-      toast.success("Invoice uploaded. WhatsApp opened.");
-
-    } catch (err) {
-      console.error("Error sharing on WhatsApp:", err);
-      alert("Error sharing on WhatsApp.");
-    } finally {
+    if (!response.ok) {
+      toast.error("Failed to upload invoice to Transfer.sh");
       if (buttonEl) buttonEl.style.display = "flex";
+      return;
     }
-  };
+
+    const invoiceURL = await response.text(); // plain URL
+
+    const name = selectedBill?.customer?.name || "Customer";
+    let mobile = selectedBill?.customer?.mobile || "";
+    mobile = mobile.replace(/\D/g, ""); // remove non-digits
+    if (!mobile.startsWith("91")) mobile = "91" + mobile;
+
+    const message = `Hello ${name}, here is your invoice:\n${invoiceURL}`;
+    const whatsappLink = `https://wa.me/${mobile}?text=${encodeURIComponent(message)}`;
+
+    // Open WhatsApp using <a> to bypass popup blockers
+    const a = document.createElement("a");
+    a.href = whatsappLink;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Manual fallback link if needed
+    toast.info(
+      <span>
+        If WhatsApp didn't open,{" "}
+        <a href={whatsappLink} target="_blank" rel="noopener noreferrer" style={{ color: 'blue', textDecoration: 'underline' }}>
+          click here
+        </a>{" "}
+        to send manually.
+      </span>
+    );
+
+    toast.success("Invoice uploaded and WhatsApp opened.");
+  } catch (err) {
+    console.error("Error sharing on WhatsApp:", err);
+    alert("Error sharing on WhatsApp.");
+  } finally {
+    if (buttonEl) buttonEl.style.display = "flex";
+  }
+};
+
+
+
+
 
 
   const downloadInvoiceAsPDF = () => {
