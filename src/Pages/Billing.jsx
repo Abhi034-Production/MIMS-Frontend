@@ -114,77 +114,154 @@ const Billing = () => {
 
 
 
+
+
+
+
+
 const shareInvoiceOnWhatsApp = async () => {
   const buttonEl = document.querySelector("#invoice-actions");
   if (buttonEl) buttonEl.style.display = "none";
 
   try {
+    // Generate PDF
     const canvas = await html2canvas(invoiceRef.current, { scale: 2 });
     const imgData = canvas.toDataURL("image/png");
-
     const pdf = new jsPDF("p", "mm", "a4");
     const pageWidth = pdf.internal.pageSize.getWidth();
     const imgProps = pdf.getImageProperties(imgData);
     const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
-
     pdf.addImage(imgData, "PNG", 0, 0, pageWidth, pdfHeight);
     const pdfBlob = pdf.output("blob");
 
-    const formData = new FormData();
-    formData.append("file", pdfBlob, `Invoice_${selectedBill._id}.pdf`);
-
-    // Upload to file.io with 2-day expiration
-    const response = await fetch("https://file.io/?expires=2d", {
-      method: "POST",
-      body: formData,
+    // Upload to Transfer.sh
+    const filename = `Invoice_${selectedBill._id}.pdf`;
+    const response = await fetch(`https://transfer.sh/${filename}`, {
+      method: "PUT",
+      body: pdfBlob,
+      headers: {
+        "Content-Type": "application/pdf"
+      }
     });
 
-    const data = await response.json();
-
-    if (!data?.success || !data?.link) {
-      toast.error("Failed to upload invoice");
-      if (buttonEl) buttonEl.style.display = "flex";
-      return;
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
     }
 
-    const invoiceURL = data.link;
+    const invoiceURL = await response.text();
 
+    // Prepare WhatsApp message
     const name = selectedBill?.customer?.name || "Customer";
-    let mobile = selectedBill?.customer?.mobile || "";
-    mobile = mobile.replace(/\D/g, ""); // remove non-digits
-    if (!mobile.startsWith("91")) mobile = "91" + mobile;
+    let mobile = selectedBill?.customer?.mobile?.toString() || "";
+    mobile = mobile.replace(/\D/g, "");
+    if (mobile && !mobile.startsWith("91")) mobile = "91" + mobile;
 
     const message = `Hello ${name}, here is your invoice:\n${invoiceURL}`;
     const whatsappLink = `https://wa.me/${mobile}?text=${encodeURIComponent(message)}`;
 
-    // Try safe method: Create <a> element and trigger click
-    const a = document.createElement("a");
-    a.href = whatsappLink;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    // Open WhatsApp
+    window.open(whatsappLink, "_blank", "noopener,noreferrer");
 
-    // Also show fallback link
-    toast.info(
+    // Show success notification
+    toast.success(
       <span>
-        If WhatsApp didn't open,{" "}
-        <a href={whatsappLink} target="_blank" rel="noopener noreferrer" style={{ color: 'blue', textDecoration: 'underline' }}>
+        Invoice shared successfully! If WhatsApp didn't open,{" "}
+        <a 
+          href={whatsappLink} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          style={{ color: 'blue', textDecoration: 'underline' }}
+        >
           click here
-        </a>{" "}
-        to send manually.
+        </a>.
       </span>
     );
 
-    toast.success("Invoice uploaded. WhatsApp opened.");
   } catch (err) {
-    console.error("Error sharing on WhatsApp:", err);
-    alert("Error sharing on WhatsApp.");
+    console.error("Error sharing invoice:", err);
+    toast.error(`Failed to share invoice: ${err.message}`);
   } finally {
     if (buttonEl) buttonEl.style.display = "flex";
   }
 };
+
+
+
+
+  
+
+
+// const shareInvoiceOnWhatsApp = async () => {
+//   const buttonEl = document.querySelector("#invoice-actions");
+//   if (buttonEl) buttonEl.style.display = "none";
+
+//   try {
+//     const canvas = await html2canvas(invoiceRef.current, { scale: 2 });
+//     const imgData = canvas.toDataURL("image/png");
+
+//     const pdf = new jsPDF("p", "mm", "a4");
+//     const pageWidth = pdf.internal.pageSize.getWidth();
+//     const imgProps = pdf.getImageProperties(imgData);
+//     const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
+
+//     pdf.addImage(imgData, "PNG", 0, 0, pageWidth, pdfHeight);
+//     const pdfBlob = pdf.output("blob");
+
+//     const formData = new FormData();
+//     formData.append("file", pdfBlob, `Invoice_${selectedBill._id}.pdf`);
+
+//     // Upload to file.io with 2-day expiration
+//     const response = await fetch("https://file.io/?expires=2d", {
+//       method: "POST",
+//       body: formData,
+//     });
+
+//     const data = await response.json();
+
+//     if (!data?.success || !data?.link) {
+//       toast.error("Failed to upload invoice");
+//       if (buttonEl) buttonEl.style.display = "flex";
+//       return;
+//     }
+
+//     const invoiceURL = data.link;
+
+//     const name = selectedBill?.customer?.name || "Customer";
+//     let mobile = selectedBill?.customer?.mobile || "";
+//     mobile = mobile.replace(/\D/g, ""); // remove non-digits
+//     if (!mobile.startsWith("91")) mobile = "91" + mobile;
+
+//     const message = `Hello ${name}, here is your invoice:\n${invoiceURL}`;
+//     const whatsappLink = `https://wa.me/${mobile}?text=${encodeURIComponent(message)}`;
+
+//     // Try safe method: Create <a> element and trigger click
+//     const a = document.createElement("a");
+//     a.href = whatsappLink;
+//     a.target = "_blank";
+//     a.rel = "noopener noreferrer";
+//     document.body.appendChild(a);
+//     a.click();
+//     document.body.removeChild(a);
+
+//     // Also show fallback link
+//     toast.info(
+//       <span>
+//         If WhatsApp didn't open,{" "}
+//         <a href={whatsappLink} target="_blank" rel="noopener noreferrer" style={{ color: 'blue', textDecoration: 'underline' }}>
+//           click here
+//         </a>{" "}
+//         to send manually.
+//       </span>
+//     );
+
+//     toast.success("Invoice uploaded. WhatsApp opened.");
+//   } catch (err) {
+//     console.error("Error sharing on WhatsApp:", err);
+//     alert("Error sharing on WhatsApp.");
+//   } finally {
+//     if (buttonEl) buttonEl.style.display = "flex";
+//   }
+// };
 
 
 
