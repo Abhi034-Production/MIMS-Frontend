@@ -80,10 +80,11 @@ const AdminDashboard = () => {
       })
       .catch((error) => console.error("Error fetching data:", error));
 
-    // Fetch low stock products
     axios.get(`https://mims-backend-x0i3.onrender.com/products`)
       .then((response) => {
-        const lowStockProducts = response.data.filter((product) => product.quantity < 5);
+        const lowStockProducts = response.data.filter(
+          (product) => product.quantity !== undefined && product.quantity < 5
+        );
         setLowStock(lowStockProducts);
       })
       .catch((err) => console.error("Error fetching products:", err));
@@ -92,13 +93,11 @@ const AdminDashboard = () => {
   const downloadLowStockPDF = () => {
     const doc = new jsPDF();
     doc.text("Low Stock Inventory Report", 14, 15);
-
     autoTable(doc, {
       startY: 25,
       head: [["Product Name", "Quantity", "Price"]],
       body: lowStock.map(item => [item.name, item.quantity, `₹${item.price}`]),
     });
-
     doc.save("low_stock_inventory.pdf");
   };
 
@@ -151,7 +150,6 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        {/* Monthly Sales Target Progress */}
         <div className="p-6 bg-white rounded-3xl shadow transition-all duration-300 mb-10">
           <div className="flex items-center gap-3 mb-5">
             <MdTrendingUp className="text-3xl text-indigo-600" />
@@ -187,7 +185,6 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Top Selling Products */}
         <div className="p-6 bg-white rounded-2xl shadow hover:shadow-lg transition duration-300">
           <div className="flex items-center gap-3 mb-4">
             <MdStar className="text-2xl text-yellow-500" />
@@ -207,7 +204,7 @@ const AdminDashboard = () => {
           )}
         </div>
 
-        {/* Low Stock Inventory */}
+        {/* ✅ Low Stock Section */}
         <div className="p-6 bg-white rounded-2xl shadow hover:shadow-lg transition duration-300 mt-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
