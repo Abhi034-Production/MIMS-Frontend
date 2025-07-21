@@ -13,7 +13,6 @@ import {
 } from "react-icons/md";
 import { format, parseISO } from "date-fns";
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 
 const AdminDashboard = () => {
   const [summaryData, setSummaryData] = useState({
