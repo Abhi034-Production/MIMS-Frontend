@@ -222,7 +222,7 @@ const Orders = () => {
           <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
             <div className="bg-white p-4 rounded shadow-lg w-full max-w-[850px]">
               <div ref={invoiceRef}>
-                <style>{`
+                {/* <style>{`
                   .invoice-container {
                     width: 210mm;
                     min-height: 297mm;
@@ -315,8 +315,86 @@ const Orders = () => {
                     margin-top: 10px;
                     color: #666;
                   }
-                `}</style>
+                `}</style> */}
 
+       <style>{`  
+              body {  
+                font-family: 'Helvetica', Arial, sans-serif;  
+                background-color: #f8e1e1;  
+                margin: 0;  
+                padding: 0;  
+              }  
+              .invoice-container {  
+                max-width: 800px;  
+                margin: 0 auto;  
+                background: #fff;  
+                padding: 25px;  
+                border-radius: 10px;  
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);  
+                font-family: 'Helvetica', Arial, sans-serif;  
+              }  
+              .header {  
+                text-align: center;  
+                border-bottom: 2px solid #f0b8b8;  
+                padding-bottom: 15px;  
+                margin-bottom: 25px;  
+              }  
+              .header h1 {  
+                margin: 10px 0;  
+                font-size: 26px;  
+                color: #d32f2f;  
+              }  
+              .header p {  
+                margin: 5px 0;  
+                color: #444;  
+              }  
+              .invoice-details, .customer-details {  
+                display: flex;  
+                justify-content: space-between;  
+                margin-bottom: 25px;  
+                font-size: 14px;  
+              }  
+              .invoice-details div, .customer-details div {  
+                width: 48%;  
+              }  
+              table {  
+                width: 100%;  
+                border-collapse: collapse;  
+                margin-bottom: 25px;  
+              }  
+              th, td {  
+                border: 1px solid #f0b8b8;  
+                padding: 10px;  
+                text-align: left;  
+              }  
+              th {  
+                background-color: #d32f2f;  
+                color: #fff;  
+              }  
+              .total {  
+                text-align: right;  
+                font-weight: bold;  
+                font-size: 16px;  
+                color: #b71c1c;  
+                margin-top: 10px;  
+              }  
+              .footer {  
+                text-align: center;  
+                margin-top: 25px;  
+                font-size: 13px;  
+                color: #666;  
+                border-top: 1px solid #f0b8b8;  
+                padding-top: 15px;  
+              }  
+              .stamp {  
+                text-align: center;  
+                margin-top: 20px;  
+              }  
+              .stamp img {  
+                max-width: 120px;  
+                margin: 10px 0;  
+              }  
+            `}</style>  
                 <div className="invoice-container">
                   {!imagesLoaded && (
                     <div className="invoice-loader">
