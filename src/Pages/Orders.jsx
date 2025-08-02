@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import html2canvas from "html2canvas";
@@ -6,7 +5,6 @@ import jsPDF from "jspdf";
 import AdminLayout from "../Components/AdminLayout";
 import { Link } from "react-router-dom";
 import { MdFileDownload, MdSearch, MdOutlineHome } from "react-icons/md";
-
 
 const Orders = () => {
   const [bills, setBills] = useState([]);
@@ -64,20 +62,62 @@ const Orders = () => {
     const buttons = document.querySelector("#invoice-actions");
     buttons.style.display = "none";
 
-    html2canvas(invoiceRef.current, { scale: 2 }).then((canvas) => {
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
+    const element = invoiceRef.current;
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
 
-      pdf.addImage(imgData, "PNG", 0, 0, pageWidth, pdfHeight);
+    html2canvas(element, {
+      scale: 3,
+      useCORS: true,
+      logging: false,
+      backgroundColor: "#FFFFFF"
+    }).then((canvas) => {
+      const imgData = canvas.toDataURL("image/png");
+      const imgProps = pdf.getImageProperties(imgData);
+      const imgWidth = pageWidth - 20; // 10mm left/right margins
+      const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+      let heightLeft = imgHeight;
+      let position = 10; // Start position (top margin)
+      let page = 0;
+
+      // First page
+      pdf.addImage(
+        imgData,
+        "PNG",
+        10, // Left margin
+        position,
+        imgWidth,
+        imgHeight,
+        undefined,
+        "MEDIUM" // Better compression quality
+      );
+      heightLeft -= pageHeight - 30; // Account for margins
+
+      // Additional pages if needed
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        page++;
+        pdf.addImage(
+          imgData,
+          "PNG",
+          10,
+          position + 10, // Adjust for new page
+          imgWidth,
+          imgHeight,
+          undefined,
+          "MEDIUM"
+        );
+        heightLeft -= pageHeight - 20;
+      }
+
       pdf.save(`Invoice_${selectedBill._id}.pdf`);
       buttons.style.display = "flex";
       closeModal();
     });
   };
-
 
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
@@ -110,8 +150,6 @@ const Orders = () => {
             <MdSearch />
           </button>
         </div>
-
-
 
         <div className="overflow-x-auto bg-white rounded-lg shadow p-4 mb-6 mt-6">
           <table className="w-full text-sm md:text-base">
@@ -154,118 +192,109 @@ const Orders = () => {
           <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50">Next</button>
         </div>
 
-
         {selectedBill && (
           <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
             <div className="bg-white p-4 rounded shadow-lg w-full max-w-[850px]">
               <div ref={invoiceRef}>
                 <style>{`
-          body {
-            font-family: 'Helvetica', Arial, sans-serif;
-            background-color: #f8e1e1;
-            margin: 0;
-            padding: 0;
-          }
-          .invoice-container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: #fff;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-            font-family: 'Helvetica', Arial, sans-serif;
-          }
-          .header {
-            text-align: center;
-            border-bottom: 2px solid #f0b8b8;
-            padding-bottom: 15px;
-            margin-bottom: 25px;
-          }
-          .header h1 {
-            margin: 10px 0;
-            font-size: 26px;
-            color: #d32f2f;
-          }
-          .header p {
-            margin: 5px 0;
-            color: #444;
-          }
-          .invoice-details, .customer-details {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 25px;
-            font-size: 14px;
-          }
-          .invoice-details div, .customer-details div {
-            width: 48%;
-          }
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 25px;
-          }
-          th, td {
-            border: 1px solid #f0b8b8;
-            padding: 10px;
-            text-align: left;
-          }
-          th {
-            background-color: #d32f2f;
-            color: #fff;
-          }
-          .total {
-            text-align: right;
-            font-weight: bold;
-            font-size: 16px;
-            color: #b71c1c;
-            margin-top: 10px;
-          }
-          .footer {
-            text-align: center;
-            margin-top: 25px;
-            font-size: 13px;
-            color: #666;
-            border-top: 1px solid #f0b8b8;
-            padding-top: 15px;
-          }
-          .stamp {
-            text-align: center;
-            margin-top: 20px;
-          }
-          .stamp img {
-            max-width: 120px;
-            margin: 10px 0;
-          }
-        `}</style>
-
+                  .invoice-container {
+                    width: 210mm;
+                    min-height: 297mm;
+                    margin: 0 auto;
+                    padding: 15mm;
+                    background: #fff;
+                    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+                    position: relative;
+                    box-sizing: border-box;
+                    font-family: 'Arial', sans-serif;
+                  }
+                  .header {
+                    text-align: center;
+                    border-bottom: 2px solid #f0b8b8;
+                    padding-bottom: 15px;
+                    margin-bottom: 25px;
+                  }
+                  .header h1 {
+                    margin: 10px 0 5px;
+                    font-size: 28px;
+                    color: #d32f2f;
+                  }
+                  .invoice-details, .customer-details {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 25px;
+                    font-size: 14px;
+                  }
+                  table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 20px 0;
+                  }
+                  th {
+                    background-color: #d32f2f;
+                    color: #fff;
+                    padding: 10px;
+                    text-align: left;
+                  }
+                  td {
+                    padding: 10px;
+                    border: 1px solid #f0b8b8;
+                  }
+                  .total {
+                    text-align: right;
+                    font-size: 18px;
+                    font-weight: bold;
+                    margin-top: 20px;
+                    padding: 10px;
+                  }
+                  .footer {
+                    position: absolute;
+                    bottom: 15mm;
+                    left: 0;
+                    right: 0;
+                    padding-top: 15px;
+                    border-top: 1px solid #f0b8b8;
+                    text-align: center;
+                  }
+                  .stamp {
+                    float: right;
+                    margin-top: 30px;
+                  }
+                  .stamp img {
+                    max-width: 120px;
+                    opacity: 0.8;
+                  }
+                  .flex-row-reverse {
+                    display: flex;
+                    flex-direction: row-reverse;
+                    align-items: center;
+                    margin-bottom: 20px;
+                  }
+                  .logo-container {
+                    width: 30%;
+                    text-align: right;
+                  }
+                  .shop-info {
+                    width: 70%;
+                    text-align: center;
+                  }
+                `}</style>
 
                 <div className="invoice-container">
-                  <div className="header">
-
-
-                    <div className="flex flex-row-reverse w-full  p-2">
-                      <div className="w-9/12">
-                        <h1 className="text-10xl font-extrabold  text-center">Sai Mobile Shop & Accessories</h1>
-                      </div>
-                      <div className="w-3/12 flex items-center">
-                        <img
-                          className="block m-auto -top-4  w-full h-full "
-                          src="https://i.ibb.co/ymp7B3FW/logo-main.png"
-                          alt="Sai Mobile Shop Logo"
-                        />
-                      </div>
+                  <div className="flex-row-reverse">
+                    <div className="logo-container">
+                      <img
+                        src="https://i.ibb.co/ymp7B3FW/logo-main.png"
+                        alt="Sai Mobile Shop Logo"
+                        style={{ maxWidth: "100px" }}
+                      />
                     </div>
-                    <div>
+                    <div className="shop-info">
+                      <h1>Sai Mobile Shop & Accessories</h1>
                       <p>Shop No 3, Koregaon Phata, Ambethan.</p>
                       <p>Phone: +91 9545199204 | Email: saienterprises9063@gmail.com</p>
-
                     </div>
                   </div>
-
-
-
-
-
 
                   <div className="invoice-details">
                     <div>
@@ -280,7 +309,7 @@ const Orders = () => {
 
                   <div className="customer-details">
                     <div>
-                      <p><strong>Customer Details::</strong></p>
+                      <p><strong>Customer Details:</strong></p>
                       <p>{selectedBill.customer.name}</p>
                       <p>Email: {selectedBill.customer.email}</p>
                       <p>Mobile: {selectedBill.customer.mobile}</p>
@@ -312,28 +341,20 @@ const Orders = () => {
                     <p>Total: ₹{selectedBill.total}</p>
                   </div>
 
-
-                  <div className="footer flex flex-col md:flex-row justify-between mt-0 items-center">
+                  <div className="footer">
                     <div>
                       <p>Thank you for shopping at Sai Mobile Shop & Accessories!</p>
                       <p>Terms: All sales are final. Contact us for warranty details.</p>
                     </div>
                     <div className="stamp">
                       <img
-                        className="w-24 h-24 md:w-32 md:h-32 object-contain"
                         src="https://iili.io/FVXKZCP.md.png"
                         alt="Shop Stamp"
                       />
                     </div>
                   </div>
-
-
-
                 </div>
               </div>
-
-
-
 
               <div id="invoice-actions" className="flex justify-end gap-3 mt-4">
                 <button
@@ -358,153 +379,372 @@ const Orders = () => {
             </div>
           </div>
         )}
-
-
-
-        {/* 
-         {selectedBill && (
-  <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-    <div className="bg-white p-6 rounded shadow-lg w-full max-w-[800px]">
-      <div ref={invoiceRef}>
-        <style>{`
-          .invoice-container {
-            font-family: Arial, sans-serif;
-            color: #333;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 6px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-          }
-          .invoice-container h1, .invoice-container h2 {
-            color: #1a73e8;
-          }
-          .invoice-header, .invoice-footer {
-            text-align: center;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #ddd;
-          }
-          .invoice-details {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-          }
-          .invoice-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-          }
-          .invoice-table th, .invoice-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            font-size: 13px;
-          }
-          .invoice-table th {
-            background-color: #1a73e8;
-            color: #fff;
-          }
-          .invoice-total {
-            text-align: right;
-            margin-top: 20px;
-            font-size: 14px;
-          }
-          .invoice-total strong {
-            font-size: 16px;
-          }
-          .invoice-footer {
-            text-align: center;
-            border-top: 1px solid #ddd;
-            margin-top: 20px;
-            padding-top: 10px;
-            font-size: 12px;
-            color: #666;
-          }
-        `}</style>
-
-        <div className="invoice-container">
-          <div className="invoice-header">
-            <h1>Mobile Shop Invoice</h1>
-            <p>
-              Invoice #{selectedBill._id.slice(-6).toUpperCase()} | Date:{" "}
-              {new Date(selectedBill.billDate).toDateString()}
-            </p>
-          </div>
-
-          <div className="invoice-details">
-            <div>
-              <h2>Mobile Store</h2>
-              <p>456 Tech Plaza, Gadget Town</p>
-              <p>Email: sales@mobilestore.com</p>
-              <p>Phone: (555) 789-1234</p>
-            </div>
-            <div>
-              <h2>Customer Details</h2>
-              <p>{selectedBill.customer.name}</p>
-              <p>{selectedBill.customer.email}</p>
-              <p>{selectedBill.customer.mobile}</p>
-            </div>
-          </div>
-
-          <table className="invoice-table">
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Qty</th>
-                <th>Price</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {selectedBill.order.map((item, i) => (
-                <tr key={i}>
-                  <td>{item.productName}</td>
-                  <td style={{ textAlign: "right" }}>{item.quantity}</td>
-                  <td style={{ textAlign: "right" }}>₹{item.price}</td>
-                  <td style={{ textAlign: "right" }}>₹{item.totalPrice}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <div className="invoice-total">
-            <p><strong>Total: ₹{selectedBill.total}</strong></p>
-          </div>
-
-          <div className="invoice-footer">
-            <p>Thank you for shopping with Mobile Store!</p>
-          </div>
-        </div>
-      </div>
-
-      <div id="invoice-actions" className="flex justify-end gap-3 mt-4">
-        <button
-          onClick={downloadInvoiceAsImage}
-          className="bg-green-600 text-white px-4 py-2 rounded"
-        >
-          Download Image
-        </button>
-        <button
-          onClick={downloadInvoiceAsPDF}
-          className="bg-purple-600 text-white px-4 py-2 rounded"
-        >
-          Download PDF
-        </button>
-        <button
-          onClick={closeModal}
-          className="bg-red-500 text-white px-4 py-2 rounded"
-        >
-          Close
-        </button>
-      </div>
-    </div>
-  </div>
-)} */}
-
       </div>
     </AdminLayout>
   );
 };
 
 export default Orders;
+
+
+
+
+// import React, { useState, useEffect, useRef } from "react";
+// import axios from "axios";
+// import html2canvas from "html2canvas";
+// import jsPDF from "jspdf";
+// import AdminLayout from "../Components/AdminLayout";
+// import { Link } from "react-router-dom";
+// import { MdFileDownload, MdSearch, MdOutlineHome } from "react-icons/md";
+
+
+// const Orders = () => {
+//   const [bills, setBills] = useState([]);
+//   const [searchQuery, setSearchQuery] = useState("");
+//   const [filteredBills, setFilteredBills] = useState([]);
+//   const [highlightedId, setHighlightedId] = useState(null);
+//   const [currentPage, setCurrentPage] = useState(1);
+//   const [selectedBill, setSelectedBill] = useState(null);
+
+//   const invoiceRef = useRef(null);
+//   const ordersPerPage = 7;
+
+//   useEffect(() => {
+//     axios.get(`https://mims-backend-x0i3.onrender.com/bills`)
+//       .then((res) => {
+//         const sorted = res.data.sort((a, b) => new Date(b.billDate) - new Date(a.billDate));
+//         setBills(sorted);
+//         setFilteredBills(sorted);
+//       }).catch((err) => console.error("Error fetching:", err));
+//   }, []);
+
+//   const handleSearchClick = () => {
+//     const filtered = bills.filter(bill =>
+//       bill.customer.name.toLowerCase().includes(searchQuery.toLowerCase())
+//     );
+//     setFilteredBills(filtered);
+//     setCurrentPage(1);
+//     setHighlightedId(filtered.length > 0 ? filtered[0]._id : null);
+//   };
+
+//   const handleDownloadInvoice = (bill) => {
+//     setSelectedBill(bill);
+//   };
+
+//   const closeModal = () => {
+//     setSelectedBill(null);
+//   };
+
+//   const downloadInvoiceAsImage = () => {
+//     const buttons = document.querySelector("#invoice-actions");
+//     buttons.style.display = "none";
+
+//     html2canvas(invoiceRef.current).then((canvas) => {
+//       const link = document.createElement("a");
+//       link.download = `Invoice_${selectedBill._id}.png`;
+//       link.href = canvas.toDataURL("image/png");
+//       link.click();
+
+//       buttons.style.display = "flex";
+//       closeModal();
+//     });
+//   };
+
+//   const downloadInvoiceAsPDF = () => {
+//     const buttons = document.querySelector("#invoice-actions");
+//     buttons.style.display = "none";
+
+//     html2canvas(invoiceRef.current, { scale: 2 }).then((canvas) => {
+//       const imgData = canvas.toDataURL("image/png");
+//       const pdf = new jsPDF("p", "mm", "a4");
+//       const pageWidth = pdf.internal.pageSize.getWidth();
+//       const imgProps = pdf.getImageProperties(imgData);
+//       const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
+
+//       pdf.addImage(imgData, "PNG", 0, 0, pageWidth, pdfHeight);
+//       pdf.save(`Invoice_${selectedBill._id}.pdf`);
+//       buttons.style.display = "flex";
+//       closeModal();
+//     });
+//   };
+
+
+//   const indexOfLastOrder = currentPage * ordersPerPage;
+//   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+//   const currentOrders = filteredBills.slice(indexOfFirstOrder, indexOfLastOrder);
+//   const totalPages = Math.ceil(filteredBills.length / ordersPerPage);
+
+//   return (
+//     <AdminLayout>
+//       <div className="p-6 min-h-screen bg-gray-50">
+//         <div className="text-sm text-gray-600 mb-4">
+//           <nav className="flex items-center space-x-2">
+//             <Link to="/home"><MdOutlineHome fontSize={20} /></Link>
+//             <span className="text-gray-400">/</span>
+//             <span className="font-semibold text-gray-800">Orders</span>
+//           </nav>
+//         </div>
+
+//         <div className="flex flex-col sm:flex-row justify-end items-center gap-4">
+//           <input
+//             type="search"
+//             className="w-full sm:w-auto border border-gray-300 rounded-md px-4 py-2"
+//             placeholder="Search Customer Name..."
+//             value={searchQuery}
+//             onChange={(e) => setSearchQuery(e.target.value)}
+//           />
+//           <button
+//             className="bg-blue-500 hover:bg-blue-600 text-white text-2xl px-4 py-2 rounded-md"
+//             onClick={handleSearchClick}
+//           >
+//             <MdSearch />
+//           </button>
+//         </div>
+
+
+
+//         <div className="overflow-x-auto bg-white rounded-lg shadow p-4 mb-6 mt-6">
+//           <table className="w-full text-sm md:text-base">
+//             <thead className="bg-gray-100">
+//               <tr>
+//                 <th className="text-center px-4 py-2">Customer Name</th>
+//                 <th className="text-center px-4 py-2">Products</th>
+//                 <th className="text-center px-4 py-2">Total Price</th>
+//                 <th className="text-center px-4 py-2">Date</th>
+//                 <th className="text-center px-4 py-2">Invoice</th>
+//               </tr>
+//             </thead>
+//             <tbody>
+//               {currentOrders.map(bill => (
+//                 <tr key={bill._id} className={highlightedId === bill._id ? "bg-blue-50 text-center border-b" : "text-center border-b"}>
+//                   <td className="text-center py-2">{bill.customer.name}</td>
+//                   <td className="text-left py-2">
+//                     <ul className="list-decimal pl-4">
+//                       {bill.order.map((item, i) => (
+//                         <li key={i}>{item.productName} (x{item.quantity}) - ₹{item.price}</li>
+//                       ))}
+//                     </ul>
+//                   </td>
+//                   <td className="text-center py-2">₹{bill.total}</td>
+//                   <td className="text-center py-2">{new Date(bill.billDate).toLocaleString()}</td>
+//                   <td className="text-center py-2">
+//                     <button onClick={() => handleDownloadInvoice(bill)}>
+//                       <MdFileDownload className="text-blue-600 text-xl" />
+//                     </button>
+//                   </td>
+//                 </tr>
+//               ))}
+//             </tbody>
+//           </table>
+//         </div>
+
+//         <div className="flex justify-between items-center mt-6">
+//           <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50">Previous</button>
+//           <span className="text-sm font-semibold">Page {currentPage} of {totalPages}</span>
+//           <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50">Next</button>
+//         </div>
+
+
+//         {selectedBill && (
+//           <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+//             <div className="bg-white p-4 rounded shadow-lg w-full max-w-[850px]">
+//               <div ref={invoiceRef}>
+//                 <style>{`
+//           body {
+//             font-family: 'Helvetica', Arial, sans-serif;
+//             background-color: #f8e1e1;
+//             margin: 0;
+//             padding: 0;
+//           }
+//           .invoice-container {
+//             max-width: 800px;
+//             margin: 0 auto;
+//             background: #fff;
+//             padding: 25px;
+//             border-radius: 10px;
+//             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+//             font-family: 'Helvetica', Arial, sans-serif;
+//           }
+//           .header {
+//             text-align: center;
+//             border-bottom: 2px solid #f0b8b8;
+//             padding-bottom: 15px;
+//             margin-bottom: 25px;
+//           }
+//           .header h1 {
+//             margin: 10px 0;
+//             font-size: 26px;
+//             color: #d32f2f;
+//           }
+//           .header p {
+//             margin: 5px 0;
+//             color: #444;
+//           }
+//           .invoice-details, .customer-details {
+//             display: flex;
+//             justify-content: space-between;
+//             margin-bottom: 25px;
+//             font-size: 14px;
+//           }
+//           .invoice-details div, .customer-details div {
+//             width: 48%;
+//           }
+//           table {
+//             width: 100%;
+//             border-collapse: collapse;
+//             margin-bottom: 25px;
+//           }
+//           th, td {
+//             border: 1px solid #f0b8b8;
+//             padding: 10px;
+//             text-align: left;
+//           }
+//           th {
+//             background-color: #d32f2f;
+//             color: #fff;
+//           }
+//           .total {
+//             text-align: right;
+//             font-weight: bold;
+//             font-size: 16px;
+//             color: #b71c1c;
+//             margin-top: 10px;
+//           }
+//           .footer {
+//             text-align: center;
+//             margin-top: 25px;
+//             font-size: 13px;
+//             color: #666;
+//             border-top: 1px solid #f0b8b8;
+//             padding-top: 15px;
+//           }
+//           .stamp {
+//             text-align: center;
+//             margin-top: 20px;
+//           }
+//           .stamp img {
+//             max-width: 120px;
+//             margin: 10px 0;
+//           }
+//         `}</style>
+
+//                 <div className="invoice-container">
+//                   <div className="header">
+//                     <div className="flex flex-row-reverse w-full  p-2">
+//                       <div className="w-9/12">
+//                         <h1 className="text-10xl font-extrabold  text-center">Sai Mobile Shop & Accessories</h1>
+//                       </div>
+//                       <div className="w-3/12 flex items-center">
+//                         <img
+//                           className="block m-auto -top-4  w-full h-full "
+//                           src="https://i.ibb.co/ymp7B3FW/logo-main.png"
+//                           alt="Sai Mobile Shop Logo"
+//                         />
+//                       </div>
+//                     </div>
+//                     <div>
+//                       <p>Shop No 3, Koregaon Phata, Ambethan.</p>
+//                       <p>Phone: +91 9545199204 | Email: saienterprises9063@gmail.com</p>
+//                     </div>
+//                   </div>
+
+//                   <div className="invoice-details">
+//                     <div>
+//                       <p><strong>Invoice Number:</strong> INV-{selectedBill._id.slice(-6).toUpperCase()}</p>
+//                       <p><strong>Date:</strong> {new Date(selectedBill.billDate).toDateString()}</p>
+//                     </div>
+//                     <div>
+//                       <p><strong>Due Date:</strong> {new Date(new Date(selectedBill.billDate).getTime() + 7 * 86400000).toDateString()}</p>
+//                       <p><strong>Payment Terms:</strong> Payment Receipt</p>
+//                     </div>
+//                   </div>
+
+//                   <div className="customer-details">
+//                     <div>
+//                       <p><strong>Customer Details::</strong></p>
+//                       <p>{selectedBill.customer.name}</p>
+//                       <p>Email: {selectedBill.customer.email}</p>
+//                       <p>Mobile: {selectedBill.customer.mobile}</p>
+//                     </div>
+//                   </div>
+
+//                   <table>
+//                     <thead>
+//                       <tr>
+//                         <th>Item</th>
+//                         <th>Quantity</th>
+//                         <th>Unit Price</th>
+//                         <th>Total</th>
+//                       </tr>
+//                     </thead>
+//                     <tbody>
+//                       {selectedBill.order.map((item, i) => (
+//                         <tr key={i}>
+//                           <td>{item.productName}</td>
+//                           <td>{item.quantity}</td>
+//                           <td>₹{item.price}</td>
+//                           <td>₹{item.totalPrice}</td>
+//                         </tr>
+//                       ))}
+//                     </tbody>
+//                   </table>
+
+//                   <div className="total">
+//                     <p>Total: ₹{selectedBill.total}</p>
+//                   </div>
+
+
+//                   <div className="footer flex flex-col md:flex-row justify-between mt-0 items-center">
+//                     <div>
+//                       <p>Thank you for shopping at Sai Mobile Shop & Accessories!</p>
+//                       <p>Terms: All sales are final. Contact us for warranty details.</p>
+//                     </div>
+//                     <div className="stamp">
+//                       <img
+//                         className="w-24 h-24 md:w-32 md:h-32 object-contain"
+//                         src="https://iili.io/FVXKZCP.md.png"
+//                         alt="Shop Stamp"
+//                       />
+//                     </div>
+//                   </div>
+//                 </div>
+//               </div>
+
+
+//               <div id="invoice-actions" className="flex justify-end gap-3 mt-4">
+//                 <button
+//                   onClick={downloadInvoiceAsImage}
+//                   className="bg-green-600 text-white px-4 py-2 rounded"
+//                 >
+//                   Download Image
+//                 </button>
+//                 <button
+//                   onClick={downloadInvoiceAsPDF}
+//                   className="bg-purple-600 text-white px-4 py-2 rounded"
+//                 >
+//                   Download PDF
+//                 </button>
+//                 <button
+//                   onClick={closeModal}
+//                   className="bg-red-500 text-white px-4 py-2 rounded"
+//                 >
+//                   Close
+//                 </button>
+//               </div>
+//             </div>
+//           </div>
+//         )}
+
+
+
+//       </div>
+//     </AdminLayout>
+//   );
+// };
+
+// export default Orders;
+
+
 
 
 

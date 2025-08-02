@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import AdminLayout from "../Components/AdminLayout";
 import axios from "axios";
@@ -98,7 +97,7 @@ const Report = () => {
           .slice(0, 5);
         setTopProducts(top5);
 
-        // Add the low stock products fetch
+        //  low stock products fetch
         return axios.get('https://mims-backend-x0i3.onrender.com/products');
       })
       .then(({ data: products }) => {
@@ -172,7 +171,6 @@ const Report = () => {
     });
   };
 
-  //  Show loading 
   if (loading) {
     return (
       <AdminLayout>
@@ -403,6 +401,7 @@ const Report = () => {
                 </table>
               </div>
             )}
+            
           {/* Orders Table (hidden for UI, shown in PDF)
         <div ref={ordersRef} className="overflow-x-auto bg-white rounded-lg shadow p-4 mb-6 mt-4">
           <h2 className="text-xl font-semibold mb-4">Orders for {selectedMonth}</h2>
