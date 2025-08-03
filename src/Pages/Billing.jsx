@@ -265,27 +265,27 @@ const Billing = () => {
 
   return (
     <AdminLayout>
-      <div className="text-sm text-gray-600 mb-4">
-        <nav className="flex items-center space-x-2">
+      <div className="text-sm text-gray-600 mb-4 dark:text-white">
+        <nav className="flex items-center space-x-2 dark:text-white">
           <Link to='/home'><MdOutlineHome fontSize={20} /></Link>
-          <span className="text-gray-400">/</span>
-          <span className="font-semibold text-gray-800">Billing</span>
+          <span className="text-gray-400 dark:text-white">/</span>
+          <span className="font-semibold text-gray-800 dark:text-white">Billing</span>
         </nav>
       </div>
 
-      <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
+      <div className="p-4 md:p-6 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
         {/* Customer Form */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-6 rounded-lg shadow mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6 transition-colors">
           {['name', 'mobile', 'email'].map((field, idx) => (
             <div key={idx}>
-              <label className="block text-sm font-medium text-gray-600 mb-1 capitalize">{field}:</label>
+              <label className="block text-sm font-medium text-gray-600 dark:text-white mb-1 capitalize">{field}:</label>
               <input
                 type={field === 'email' ? 'email' : field === 'mobile' ? 'tel' : 'text'}
                 name={field}
                 placeholder={`Enter ${field}`}
                 value={customer[field]}
                 onChange={handleCustomerChange}
-                className="w-full border border-gray-300 rounded-md p-2 focus:outline-blue-500"
+                className="w-full border border-gray-300 rounded-md p-2 focus:outline-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
                 required
               />
             </div>
@@ -294,15 +294,15 @@ const Billing = () => {
 
         {/* Product Selection */}
 
-        <div className="bg-white p-6 rounded-lg shadow mb-6">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6 transition-colors">
           <div className="flex flex-col md:flex-row md:items-end gap-4">
             {/* Product */}
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-600 mb-1">Product:</label>
+              <label className="block text-sm font-medium text-gray-600 dark:text-white mb-1">Product:</label>
               <select
                 value={selectedProductId}
                 onChange={(e) => setSelectedProductId(e.target.value)}
-                className="w-full border border-gray-300 rounded-md p-2 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 bg-white dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">Select Product</option>
                 {products.map(product => (
@@ -314,13 +314,13 @@ const Billing = () => {
             </div>
             {/* Quantity */}
             <div className="w-full md:w-40">
-              <label className="block text-sm font-medium text-gray-600 mb-1">Quantity:</label>
+              <label className="block text-sm font-medium text-gray-600 dark:text-white mb-1">Quantity:</label>
               <input
                 type="number"
                 min="1"
                 value={quantity}
                 onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-900 dark:text-white"
                 required
               />
             </div>
@@ -339,7 +339,7 @@ const Billing = () => {
 
             {selectedProductId && (
               <div className="md:col-span-2 flex w-full flex-col">
-                <label className="block text-sm font-medium text-gray-600 mb-1">Price:</label>
+                <label className="block text-sm font-medium text-gray-600 dark:text-white mb-1">Price:</label>
                 <div className="flex items-center gap-2 h-full">
                   <button
                     type="button"
@@ -347,7 +347,7 @@ const Billing = () => {
                     className={`h-12 px-4 rounded-md text-sm font-medium transition-colors flex-shrink-0 ${
                       editPriceMode
                         ? 'bg-green-600 text-white hover:bg-green-700'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600'
                     }`}
                   >
                     {editPriceMode ? 'Editing' : 'Edit'}
@@ -366,7 +366,7 @@ const Billing = () => {
                           [selectedProductId]: isNaN(newPrice) ? '' : newPrice
                         });
                       }}
-                      className="h-12 w-full border border-gray-300 rounded-md p-4 text-base bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="h-12 w-full border border-gray-300 dark:border-gray-600 rounded-md p-4 text-base bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   )}
                 </div>
@@ -391,20 +391,20 @@ const Billing = () => {
         
         
          {/* Order Table */}
-        <div className="overflow-x-auto bg-white rounded-lg shadow p-4 mb-6">
+        <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6 transition-colors">
           <table className="w-full text-sm md:text-base">
-            <thead className="bg-gray-100">
+            <thead className="bg-gray-100 dark:bg-gray-700">
               <tr>
-                <th className="px-4 py-2">Product Name</th>
-                <th className="px-4 py-2">Price</th>
-                <th className="px-4 py-2">Quantity</th>
-                <th className="px-4 py-2">Total</th>
-                <th className="px-4 py-2">Actions</th>
+                <th className="px-4 py-2 dark:text-white">Product Name</th>
+                <th className="px-4 py-2 dark:text-white">Price</th>
+                <th className="px-4 py-2 dark:text-white">Quantity</th>
+                <th className="px-4 py-2 dark:text-white">Total</th>
+                <th className="px-4 py-2 dark:text-white">Actions</th>
               </tr>
             </thead>
             <tbody>
               {order.map(item => (
-                <tr key={item._id} className="text-center border-b">
+                <tr key={item._id} className="text-center border-b dark:text-white">
                   <td className="py-2">{item.name}</td>
                   <td className="py-2">₹{item.price.toFixed(2)}</td>
                   <td className="py-2">{item.orderQuantity}</td>
@@ -442,26 +442,26 @@ const Billing = () => {
         )}
 
         {/* Recent Orders Table */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">Recent Orders</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 transition-colors">
+          <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Recent Orders</h2>
           <table className="w-full text-sm md:text-base">
-            <thead className="bg-gray-100">
+            <thead className="bg-gray-100 dark:bg-gray-700">
               <tr>
-                <th className="text-center px-4 py-2">Customer Name</th>
-                <th className="text-center px-4 py-2">Products</th>
-                <th className="text-center px-4 py-2">Total Price</th>
-                <th className="text-center px-4 py-2">Date</th>
-                <th className="text-center px-4 py-2">Invoice</th>
+                <th className="text-center px-4 py-2 dark:text-white">Customer Name</th>
+                <th className="text-center px-4 py-2 dark:text-white">Products</th>
+                <th className="text-center px-4 py-2 dark:text-white">Total Price</th>
+                <th className="text-center px-4 py-2 dark:text-white">Date</th>
+                <th className="text-center px-4 py-2 dark:text-white">Invoice</th>
               </tr>
             </thead>
             <tbody>
               {recentBills.map((bill) => (
-                <tr key={bill._id} className="text-center border-b">
+                <tr key={bill._id} className="text-center border-b dark:text-white">
                   <td className="py-2">{bill.customer.name}</td>
                   <td className="text-left py-2">
                     <ul className="list-disc pl-4">
                       {bill.order.map((item, i) => (
-                        <li key={i}>{item.productName} (x{item.quantity}) - ₹{item.price}</li>
+                        <li key={i} className="dark:text-white">{item.productName} (x{item.quantity}) - ₹{item.price}</li>
                       ))}
                     </ul>
                   </td>

@@ -6,6 +6,7 @@ import Login from './Components/Login'
 import Signup from './Components/Signup'
 import Loading from './Components/Loading'
 import AuthProvider from "./Context/AuthContext";
+import ThemeProvider from "./Context/ThemeContext";
 import PrivateRoute from "./Components/PrivateRoute";
 
 
@@ -19,17 +20,15 @@ const Settings = lazy(() => import('./Pages/Settings'))
 
 function App() {
   return (
-    <>
-
+    <ThemeProvider>
       <BrowserRouter>
         <Suspense fallback={<Loading />}>
           <AuthProvider>
             <Routes>
               <Route path="/" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
-              
               {/* Protected Routes */}
-               <Route element={<PrivateRoute />}>  
+              <Route element={<PrivateRoute />}>  
                 <Route path="/home" element={<AdminDashboard />} />
                 <Route path='inventory' element={<Inventory />} />
                 <Route path='billing' element={<Billing />} />
@@ -38,13 +37,12 @@ function App() {
                 <Route path="settings" element={<Settings />} />
                 <Route path='*' element={<NotFound />} />
                 <Route path='/loading' element={<Loading />} />
-               </Route>  
+              </Route>  
             </Routes>
           </AuthProvider>
         </Suspense>
       </BrowserRouter>
-
-    </>
+    </ThemeProvider>
   )
 }
 

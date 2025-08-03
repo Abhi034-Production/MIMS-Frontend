@@ -205,27 +205,27 @@ const Report = () => {
     <>
       <AdminLayout>
         {/* Breadcrumbs */}
-        <div className="text-sm text-gray-600 mb-4">
+        <div className="text-sm text-gray-600 mb-4 dark:text-white">
           <nav className="flex items-center space-x-2">
-            <span className="text-gray-500">
+            <span className="text-gray-500 dark:text-white">
               <Link to="/home"><MdOutlineHome fontSize={20} /></Link>
             </span>
-            <span className="text-gray-400">/</span>
-            <span className="font-semibold text-gray-800">Reports</span>
+            <span className="text-gray-400 dark:text-white">/</span>
+            <span className="font-semibold text-gray-800 dark:text-white">Reports</span>
           </nav>
         </div>
 
-        <div className="p-4 md:p-6 bg-gray-100 min-h-screen">
+        <div className="p-4 md:p-6 bg-gray-100 dark:bg-gray-900 min-h-screen transition-colors">
           {/* Header */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">
               Sales Report
             </h1>
             <div className="flex gap-2 flex-wrap">
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="px-3 py-2 rounded-md border border-gray-300 text-sm"
+                className="px-3 py-2 rounded-md border border-gray-300 text-sm dark:bg-gray-900 dark:text-white dark:border-gray-600"
               >
                 <option value="All">All Months</option>
                 {salesData.map(({ monthKey, monthLabel }) => (
@@ -252,59 +252,59 @@ const Report = () => {
           {/* REPORT CONTENT */}
           <div ref={reportRef}>
             {/* Monthly Bar Chart */}
-            <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-              <h2 className="text-lg font-semibold text-gray-700 mb-3">Monthly Sales Chart</h2>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-6 transition-colors">
+              <h2 className="text-lg font-semibold text-gray-700 dark:text-white mb-3">Monthly Sales Chart</h2>
               {filteredData.length === 0 ? (
-                <p className="text-gray-500">No data available.</p>
+                <p className="text-gray-500 dark:text-white">No data available.</p>
               ) : (
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={filteredData} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
+                <ResponsiveContainer width="100%" height={300} className="dark:text-white">
+                  <BarChart className="dark:text-white" data={filteredData} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="monthLabel" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="total" fill="#5990d7" />
+                    <XAxis dataKey="monthLabel" className="dark:text-white" />
+                    <YAxis className="dark:text-white" />
+                    <Tooltip className="dark:text-white"/>
+                    <Bar dataKey="total" fill="#5990d7" className="dark:text-white" />
                   </BarChart>
                 </ResponsiveContainer>
               )}
             </div>
 
             {/* Monthly Summary */}
-            <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-              <h2 className="text-lg font-semibold text-gray-700 mb-3">Monthly Sales Summary</h2>
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md mb-6 transition-colors">
+              <h2 className="text-lg font-semibold text-gray-700 dark:text-white mb-3">Monthly Sales Summary</h2>
               <ul className="divide-y divide-gray-200 text-sm md:text-base">
                 {filteredData.slice(-5).map(({ monthLabel, total, start, end }) => (
-                  <li key={monthLabel} className="py-2 flex flex-col md:flex-row justify-between">
+                  <li key={monthLabel} className="py-2 flex flex-col md:flex-row justify-between dark:text-white">
                     <div>
-                      <span className="font-medium text-gray-800">{monthLabel}</span>
-                      <p className="text-gray-500 text-xs">({start} – {end})</p>
+                      <span className="font-medium text-gray-800 dark:text-white">{monthLabel}</span>
+                      <p className="text-gray-500 text-xs dark:text-white">({start} – {end})</p>
                     </div>
-                    <span className="font-bold text-[#5990d7]">₹{total}</span>
+                    <span className="font-bold text-[#5990d7] dark:text-white">₹{total}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
             {/* Top Products */}
-            <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-              <h2 className="text-lg font-semibold text-gray-700 mb-3">Top 5 Selling Products</h2>
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md mb-6 transition-colors">
+              <h2 className="text-lg font-semibold text-gray-700 dark:text-white mb-3">Top 5 Selling Products</h2>
               <ul className="divide-y divide-gray-200 text-sm md:text-base">
                 {topProducts.map((p, idx) => (
-                  <li key={idx} className="flex justify-between py-2">
+                  <li key={idx} className="flex justify-between py-2 dark:text-white">
                     <span>{p.name}</span>
-                    <span className="font-bold text-[#5990d7]">{p.sold}</span>
+                    <span className="font-bold text-[#5990d7] dark:text-white">{p.sold}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
             {/* Yearly Sales */}
-            <div className="bg-white rounded-lg shadow-md p-4">
-              <h2 className="text-lg font-semibold text-gray-700 mb-3">Yearly Sales Report</h2>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 transition-colors">
+              <h2 className="text-lg font-semibold text-gray-700 dark:text-white mb-3">Yearly Sales Report</h2>
               {yearlyData.length === 0 ? (
-                <p className="text-gray-500">No data available.</p>
+                <p className="text-gray-500 dark:text-white">No data available.</p>
               ) : (
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={300} className="dark:text-white">
                   <BarChart data={yearlyData} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="year" />
@@ -320,11 +320,11 @@ const Report = () => {
 
 
           {/* ✅ Low Stock Section */}
-          <div className="p-6 bg-white rounded-2xl shadow hover:shadow-lg transition duration-300 mt-8">
+          <div className="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow hover:shadow-lg transition duration-300 mt-8">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <MdInventory className="text-2xl text-red-600" />
-                <h2 className="text-lg font-semibold text-gray-700">Low Stock Inventory (Less than 5)</h2>
+                <h2 className="text-lg font-semibold text-gray-700 dark:text-white">Low Stock Inventory (Less than 5)</h2>
               </div>
               {lowStock.length > 0 && (
                 <button
@@ -339,14 +339,14 @@ const Report = () => {
             {lowStock.length > 0 ? (
               <ul className="divide-y divide-gray-200">
                 {lowStock.map((product, index) => (
-                  <li key={index} className="flex justify-between py-3 text-gray-700">
+                  <li key={index} className="flex justify-between py-3 text-gray-700 dark:text-white">
                     <span>{product.name}</span>
                     <span className="text-sm">Qty: {product.quantity} | ₹{product.price}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-gray-500">All inventory is sufficiently stocked.</p>
+              <p className="text-sm text-gray-500 dark:text-white">All inventory is sufficiently stocked.</p>
             )}
           </div>
 
@@ -403,11 +403,11 @@ const Report = () => {
             )}
             
           {/* Orders Table (hidden for UI, shown in PDF)
-        <div ref={ordersRef} className="overflow-x-auto bg-white rounded-lg shadow p-4 mb-6 mt-4">
+        <div ref={ordersRef} className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6 mt-4 transition-colors">
           <h2 className="text-xl font-semibold mb-4">Orders for {selectedMonth}</h2>
          
           <table className="w-full text-sm md:text-base">
-            <thead className="bg-gray-100">
+            <thead className="bg-gray-100 dark:bg-gray-700">
               <tr className="bg-gray-200">
                 <th className="px-4 py-2">Date</th>
                 <th className="px-4 py-2">Customer Name</th>

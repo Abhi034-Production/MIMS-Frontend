@@ -121,19 +121,19 @@ const Orders = () => {
 
   return (
     <AdminLayout>
-      <div className="p-6 min-h-screen bg-gray-50">
-        <div className="text-sm text-gray-600 mb-4">
+      <div className="p-6 min-h-screen bg-gray-50 dark:bg-gray-900 dark:text-white transition-colors">
+        <div className="text-sm text-gray-600 mb-4 dark:text-white">
           <nav className="flex items-center space-x-2">
             <Link to="/home"><MdOutlineHome fontSize={20} /></Link>
-            <span className="text-gray-400">/</span>
-            <span className="font-semibold text-gray-800">Orders</span>
+            <span className="text-gray-400 dark:text-white">/</span>
+            <span className="font-semibold text-gray-800 dark:text-white">Orders</span>
           </nav>
         </div>
 
         <div className="flex flex-col sm:flex-row justify-end items-center gap-4">
           <input
             type="search"
-            className="w-full sm:w-auto border border-gray-300 rounded-md px-4 py-2"
+            className="w-full sm:w-auto border border-gray-300 rounded-md px-4 py-2 dark:bg-gray-900 dark:text-white dark:border-gray-600"
             placeholder="Search Customer Name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -146,31 +146,31 @@ const Orders = () => {
           </button>
         </div>
 
-        <div className="overflow-x-auto bg-white rounded-lg shadow p-4 mb-6 mt-6">
+        <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6 mt-6 transition-colors">
           <table className="w-full text-sm md:text-base">
-            <thead className="bg-gray-100">
+            <thead className="bg-gray-100 dark:bg-gray-700">
               <tr>
-                <th className="text-center px-4 py-2">Customer Name</th>
-                <th className="text-center px-4 py-2">Products</th>
-                <th className="text-center px-4 py-2">Total Price</th>
-                <th className="text-center px-4 py-2">Date</th>
-                <th className="text-center px-4 py-2">Invoice</th>
+                <th className="text-center px-4 py-2 dark:text-white">Customer Name</th>
+                <th className="text-center px-4 py-2 dark:text-white">Products</th>
+                <th className="text-center px-4 py-2 dark:text-white">Total Price</th>
+                <th className="text-center px-4 py-2 dark:text-white">Date</th>
+                <th className="text-center px-4 py-2 dark:text-white">Invoice</th>
               </tr>
             </thead>
             <tbody>
               {currentOrders.map(bill => (
-                <tr key={bill._id} className={highlightedId === bill._id ? "bg-blue-50 text-center border-b" : "text-center border-b"}>
-                  <td className="text-center py-2">{bill.customer.name}</td>
-                  <td className="text-left py-2">
+                <tr key={bill._id} className={highlightedId === bill._id ? "bg-blue-50 dark:bg-blue-900 text-center border-b" : "text-center border-b"}>
+                  <td className="text-center py-2 dark:text-white">{bill.customer.name}</td>
+                  <td className="text-left py-2 dark:text-white">
                     <ul className="list-decimal pl-4">
                       {bill.order.map((item, i) => (
-                        <li key={i}>{item.productName} (x{item.quantity}) - ₹{item.price}</li>
+                        <li key={i} className="dark:text-white">{item.productName} (x{item.quantity}) - ₹{item.price}</li>
                       ))}
                     </ul>
                   </td>
-                  <td className="text-center py-2">₹{bill.total}</td>
-                  <td className="text-center py-2">{new Date(bill.billDate).toLocaleString()}</td>
-                  <td className="text-center py-2">
+                  <td className="text-center py-2 dark:text-white">₹{bill.total}</td>
+                  <td className="text-center py-2 dark:text-white">{new Date(bill.billDate).toLocaleString()}</td>
+                  <td className="text-center py-2 dark:text-white">
                     <button onClick={() => handleDownloadInvoice(bill)}>
                       <MdFileDownload className="text-blue-600 text-xl" />
                     </button>
@@ -181,10 +181,20 @@ const Orders = () => {
           </table>
         </div>
 
-        <div className="flex justify-between items-center mt-6">
-          <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50">Previous</button>
-          <span className="text-sm font-semibold">Page {currentPage} of {totalPages}</span>
-          <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50">Next</button>
+        <div className="flex justify-between items-center mt-6 dark:text-white">
+          <button 
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+            disabled={currentPage === 1} 
+            className="px-4 py-2 bg-gray-300 dark:bg-gray-700 dark:border dark:border-gray-600 rounded disabled:opacity-50 dark:text-white transition-colors">
+            <span className="dark:text-white">Previous</span>
+          </button>
+          <span className="text-sm font-semibold dark:text-white">Page {currentPage} of {totalPages}</span>
+          <button 
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+            disabled={currentPage === totalPages} 
+            className="px-4 py-2 bg-gray-300 dark:bg-gray-700 dark:border dark:border-gray-600 rounded disabled:opacity-50 dark:text-white transition-colors">
+            <span className="dark:text-white">Next</span>
+          </button>
         </div>
 
         {selectedBill && (

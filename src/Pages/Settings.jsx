@@ -1,16 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import AdminLayout from "../Components/AdminLayout";
 import { Link, useNavigate } from "react-router-dom";
 import { MdOutlineHome } from "react-icons/md";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
+import { ThemeContext } from "../Context/ThemeContext";
 
 const Settings = () => {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const { theme, toggleTheme } = useContext(ThemeContext);
 
   useEffect(() => {
     const storedAdmin = JSON.parse(localStorage.getItem("adminInfo"));
@@ -46,46 +48,49 @@ const Settings = () => {
 
   return (
     <AdminLayout>
-      <div className="text-sm text-gray-600 mb-4">
+      <div className="text-sm text-gray-600 mb-4 dark:text-white">
         <nav className="flex items-center space-x-2">
-          <span className="text-gray-500">
+          <span className="text-gray-500 dark:text-white">
             <Link to="/home">
               <MdOutlineHome fontSize={20} />
             </Link>
           </span>
-          <span className="text-gray-400">/</span>
-          <span className="font-semibold text-gray-800">Settings</span>
+          <span className="text-gray-400 dark:text-white">/</span>
+          <span className="font-semibold text-gray-800 dark:text-white">Settings</span>
         </nav>
       </div>
 
-      <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
-        <div className="bg-white shadow rounded-lg p-6">
-        
-
+      <div className="p-4 md:p-6 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Theme</h2>
+            <button
+              onClick={toggleTheme}
+              className="px-4 py-2 rounded bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+            >
+              Switch to {theme === "light" ? "Dark" : "Light"} Mode
+            </button>
+          </div>
           <form className="space-y-4" onSubmit={handleSubmit}>
-         
-
             <div>
-              <label className="block text-sm text-gray-600">Email</label>
+              <label className="block text-sm text-gray-600 dark:text-white">Email</label>
               <input
                 type="email"
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 value={email}
                 readOnly
               />
             </div>
-
             <div>
-              <label className="block text-sm text-gray-600">Change Password</label>
+              <label className="block text-sm text-gray-600 dark:text-white">Change Password</label>
               <input
                 type="password"
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="New Password"
               />
             </div>
-
             <button
               type="submit"
               className="bg-[#5990d7] text-white px-4 py-2 rounded hover:bg-blue-700"
