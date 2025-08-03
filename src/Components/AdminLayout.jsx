@@ -16,6 +16,7 @@ const AdminLayout = ({ children }) => {
         { label: 'Billing', to: '/billing', icon: <MdMoney /> },
         { label: 'Orders', to: '/orders', icon: <MdList /> },
         { label: 'Reports', to: '/report', icon: <BiSolidReport /> },
+        { label: 'Business', to: '/business-profile', icon: <BiSolidReport /> },
     ];
 
     const handleNavToggle = () => {

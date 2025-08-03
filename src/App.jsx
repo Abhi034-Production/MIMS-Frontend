@@ -8,6 +8,8 @@ import Loading from './Components/Loading'
 import AuthProvider from "./Context/AuthContext";
 import ThemeProvider from "./Context/ThemeContext";
 import PrivateRoute from "./Components/PrivateRoute";
+import BusinessProfile from './Pages/BusinessProfile'
+
 
 
 const AdminDashboard = lazy(() => import('./Pages/AdminDashboard'))
@@ -35,6 +37,7 @@ function App() {
                 <Route path='orders' element={<Orders />} />
                 <Route path='report' element={<Report />} />
                 <Route path="settings" element={<Settings />} />
+                <Route path='business-profile' element={<BusinessProfile />} />
                 <Route path='*' element={<NotFound />} />
                 <Route path='/loading' element={<Loading />} />
               </Route>  
