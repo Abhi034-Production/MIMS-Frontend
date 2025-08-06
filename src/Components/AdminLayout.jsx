@@ -1,13 +1,14 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AuthContext } from "../Context/AuthContext";
 import { MdDashboard, MdInventory, MdMoney, MdList, MdLogout, MdOutlineClose, MdOutlineLightMode, MdNotificationsNone, MdOutlineSettings } from "react-icons/md";
-import { FiUser } from "react-icons/fi";
+import { TbListDetails } from "react-icons/tb" ;
 import { BiSolidReport } from "react-icons/bi";
 
 const AdminLayout = ({ children }) => {
     const location = useLocation();
-    const { logout } = useContext(AuthContext);
+    const { user, logout } = useContext(AuthContext);
+    const [businessName, setBusinessName] = useState("");
     const [isNavOpen, setIsNavOpen] = useState(false);
 
     const Nav_Links = [
@@ -16,9 +17,23 @@ const AdminLayout = ({ children }) => {
         { label: 'Billing', to: '/billing', icon: <MdMoney /> },
         { label: 'Orders', to: '/orders', icon: <MdList /> },
         { label: 'Reports', to: '/report', icon: <BiSolidReport /> },
-        { label: 'Business', to: '/business-profile', icon: <BiSolidReport /> },
+        { label: 'Business Detail', to: '/business-detail', icon: <TbListDetails /> },
     ];
 
+     useEffect(() => {
+        if (!user || !user.email) return;
+        fetch(`https://mims-backend-x0i3.onrender.com/business-profile/${user.email}`)
+            .then((res) => res.json())
+            .then((data) => {
+                if (data.status === "success" && data.profile && data.profile.businessName) {
+                    setBusinessName(data.profile.businessName);
+                } else {
+                    setBusinessName("");
+                }
+            })
+            .catch(() => setBusinessName(""));
+    }, [user]);
+    
     const handleNavToggle = () => {
         setIsNavOpen(!isNavOpen);
     };
@@ -41,8 +56,8 @@ const AdminLayout = ({ children }) => {
 
                     <nav className="w-full flex flex-col h-full">
                         <ul className="w-full flex-1">
-                            <h1 className="text-2xl p-2 mb-2 text-white font-semibold">
-                                Admin Panel
+                            <h1 className="text-xl p-1 mb-1 text-white font-semibold">
+                                InventoryMastermind
                             </h1>
                             <hr className="mb-3 p-2" />
                             {Nav_Links.map((item, index) => (
@@ -87,8 +102,8 @@ const AdminLayout = ({ children }) => {
                             ☰
                         </button>
                         <div className="hidden dark:text-white md:block">
-                            <span className="text-xl font-semibold">
-                                Mobile Inventory Management System
+                            <span id="businessName" className="text-xl ml-2 font-semibold">
+                                {businessName}
                             </span>
                         </div>
                         <div className="ml-auto dark:text-white flex items-center gap-8 text-2xl sm:text-base font-medium text-gray-700">
@@ -120,8 +135,3 @@ const AdminLayout = ({ children }) => {
 };
 
 export default AdminLayout;
-
-
-
-
-

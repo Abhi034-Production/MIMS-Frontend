@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { AuthContext } from "../Context/AuthContext";
 import axios from "axios";
 import AdminLayout from "../Components/AdminLayout";
 import { Link } from "react-router-dom";
@@ -26,8 +27,25 @@ const AdminDashboard = () => {
   const [achievementBadges, setAchievementBadges] = useState([]);
   const [lowStock, setLowStock] = useState([]);
 
+  const { user } = useContext(AuthContext);
+  const [businessProfile, setBusinessProfile] = useState(null);
+
   useEffect(() => {
-    axios.get(`https://mims-backend-x0i3.onrender.com/bills`)
+    if (!user || !user.email) return;
+    fetch(`https://mims-backend-x0i3.onrender.com/business-profile/${user.email}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status === "success") {
+          setBusinessProfile(data.profile);
+        }
+      })
+      .catch(() => {});
+  }, [user]);
+
+  useEffect(() => {
+    if (!businessProfile || !businessProfile.businessEmail) return;
+
+    axios.get(`https://mims-backend-x0i3.onrender.com/bills?businessEmail=${encodeURIComponent(businessProfile.businessEmail)}`)
       .then((response) => {
         const bills = response.data;
         const now = new Date();
@@ -84,7 +102,7 @@ const AdminDashboard = () => {
       })
       .catch((error) => console.error("Error fetching data:", error));
 
-    axios.get(`https://mims-backend-x0i3.onrender.com/products`)
+    axios.get(`https://mims-backend-x0i3.onrender.com/products?email=${encodeURIComponent(businessProfile.businessEmail)}`)
       .then((response) => {
         const lowStockProducts = response.data.filter(
           (product) => product.quantity !== undefined && product.quantity < 5
@@ -92,7 +110,7 @@ const AdminDashboard = () => {
         setLowStock(lowStockProducts);
       })
       .catch((err) => console.error("Error fetching products:", err));
-  }, []);
+  }, [businessProfile]);
 
   return (
     <AdminLayout>

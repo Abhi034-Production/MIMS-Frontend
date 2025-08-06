@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
+import { AuthContext } from "../Context/AuthContext";
 import axios from "axios";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -14,18 +15,42 @@ const Orders = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedBill, setSelectedBill] = useState(null);
   const [imagesLoaded, setImagesLoaded] = useState(false);
-
   const invoiceRef = useRef(null);
   const ordersPerPage = 7;
+  const { user } = useContext(AuthContext);
+  const [businessProfile, setBusinessProfile] = useState(null);
 
+
+
+  
   useEffect(() => {
-    axios.get(`https://mims-backend-x0i3.onrender.com/bills`)
-      .then((res) => {
-        const sorted = res.data.sort((a, b) => new Date(b.billDate) - new Date(a.billDate));
+    if (!user || !user.email) return;
+    fetch(`https://mims-backend-x0i3.onrender.com/business-profile/${user.email}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status === "success") {
+          setBusinessProfile(data.profile);
+        }
+      })
+      .catch(() => {});
+  }, [user]);
+
+useEffect(() => {
+  axios.get(`https://mims-backend-x0i3.onrender.com/bills`)
+    .then((res) => {
+      // Sort bills in descending order (most recent first)
+      const sorted = res.data.sort((a, b) => new Date(b.billDate) - new Date(a.billDate));
+      if (businessProfile && businessProfile.businessEmail) {
+        // Only show bills that belong to the current business email
+        const filtered = sorted.filter(bill => bill.businessEmail && bill.businessEmail === businessProfile.businessEmail);
+        setBills(filtered);
+        setFilteredBills(filtered);
+      } else {
         setBills(sorted);
         setFilteredBills(sorted);
-      }).catch((err) => console.error("Error fetching:", err));
-  }, []);
+      }
+    }).catch((err) => console.error("Error fetching:", err));
+}, [businessProfile]);
 
   const handleSearchClick = () => {
     const filtered = bills.filter(bill =>
@@ -41,10 +66,10 @@ const Orders = () => {
     setImagesLoaded(false);
     
     const logo = new Image();
-    logo.src = "https://i.ibb.co/ymp7B3FW/logo-main.png";
-    
+    logo.src = businessProfile?.businessLogo ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessLogo}` : "Please upload a logo";
+
     const stamp = new Image();
-    stamp.src = "https://iili.io/FVXKZCP.md.png";
+    stamp.src = businessProfile?.businessStamp ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessStamp}` : "Please upload a stamp";
     
     Promise.all([
       new Promise(resolve => { logo.onload = resolve; }),
@@ -146,31 +171,31 @@ const Orders = () => {
           </button>
         </div>
 
-        <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6 mt-6 transition-colors">
-          <table className="w-full text-sm md:text-base">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-2 mb-6 mt-6 sm:p-0 transition-colors">
+          <table className="w-full text-center text-[10px] xs:text-xs sm:text-sm md:text-base table-fixed break-words">
             <thead className="bg-gray-100 dark:bg-gray-700">
               <tr>
-                <th className="text-center px-4 py-2 dark:text-white">Customer Name</th>
-                <th className="text-center px-4 py-2 dark:text-white">Products</th>
-                <th className="text-center px-4 py-2 dark:text-white">Total Price</th>
-                <th className="text-center px-4 py-2 dark:text-white">Date</th>
-                <th className="text-center px-4 py-2 dark:text-white">Invoice</th>
+                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Customer Name</th>
+                <th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Products</th>
+                <th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Total Price</th>
+                <th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Date</th>
+                <th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Invoice</th>
               </tr>
             </thead>
             <tbody>
               {currentOrders.map(bill => (
                 <tr key={bill._id} className={highlightedId === bill._id ? "bg-blue-50 dark:bg-blue-900 text-center border-b" : "text-center border-b"}>
-                  <td className="text-center py-2 dark:text-white">{bill.customer.name}</td>
-                  <td className="text-left py-2 dark:text-white">
+                  <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">{bill.customer.name}</td>
+                  <td className="py-1 px-1 sm:px-2 text-left whitespace-normal break-words">
                     <ul className="list-decimal pl-4">
                       {bill.order.map((item, i) => (
                         <li key={i} className="dark:text-white">{item.productName} (x{item.quantity}) - ₹{item.price}</li>
                       ))}
                     </ul>
                   </td>
-                  <td className="text-center py-2 dark:text-white">₹{bill.total}</td>
-                  <td className="text-center py-2 dark:text-white">{new Date(bill.billDate).toLocaleString()}</td>
-                  <td className="text-center py-2 dark:text-white">
+                  <td className="py-1 px-1 sm:px-2 text-blue-600 font-semibold whitespace-normal break-words">₹{bill.total}</td>
+                  <td className="py-1 px-1 sm:px-2 whitespace-normal break-words">{new Date(bill.billDate).toLocaleString()}</td>
+                  <td className="py-1 px-1 sm:px-2 whitespace-normal break-words">
                     <button onClick={() => handleDownloadInvoice(bill)}>
                       <MdFileDownload className="text-blue-600 text-xl" />
                     </button>
@@ -199,7 +224,7 @@ const Orders = () => {
 
         {selectedBill && (
           <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white p-4 rounded shadow-lg w-full max-w-[850px] max-h-[90vh] overflow-auto">
+            <div className="bg-white dark:text-black text-black p-4 rounded shadow-lg w-full max-w-[850px] max-h-[90vh] overflow-auto">
               <div ref={invoiceRef} className="p-4">
                 <style>{`
                   body {
@@ -208,98 +233,37 @@ const Orders = () => {
                     margin: 0;
                     padding: 0;
                   }
-                  .invoice-container {
-                    max-width: 800px;
-                    margin: 0 auto;
-                    background: #fff;
-                    padding: 25px;
-                    border-radius: 10px;
-                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-                    font-family: 'Helvetica', Arial, sans-serif;
-                  }
-                  .header {
-                    text-align: center;
-                    border-bottom: 2px solid #f0b8b8;
-                    padding-bottom: 15px;
-                    margin-bottom: 25px;
-                  }
-                  .header h1 {
-                    margin: 10px 0;
-                    font-size: 26px;
-                    color: #d32f2f;
-                  }
-                  .header p {
-                    margin: 5px 0;
-                    color: #444;
-                  }
-                  .invoice-details, .customer-details {
-                    display: flex;
-                    justify-content: space-between;
-                    margin-bottom: 25px;
-                    font-size: 14px;
-                  }
-                  .invoice-details div, .customer-details div {
-                    width: 48%;
-                  }
-                  table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-bottom: 25px;
-                  }
-                  th, td {
-                    border: 1px solid #f0b8b8;
-                    padding: 10px;
-                    text-align: left;
-                  }
+                  
                   th {
                     background-color: #d32f2f;
                     color: #fff;
                   }
-                  .total {
-                    text-align: right;
-                    font-weight: bold;
-                    font-size: 16px;
-                    color: #b71c1c;
-                    margin-top: 10px;
-                  }
-                  .footer {
-                    text-align: center;
-                    margin-top: 25px;
-                    font-size: 13px;
-                    color: #666;
-                    border-top: 1px solid #f0b8b8;
-                    padding-top: 15px;
-                  }
-                  .stamp {
-                    text-align: center;
-                    margin-top: 20px;
-                  }
-                  .stamp img {
-                    max-width: 120px;
-                    margin: 10px 0;
-                  }
                 `}</style>
-                <div className="invoice-container">
-                  <div className="header">
+                <div className="max-w-[800px] mx-auto bg-white p-6 rounded-lg shadow-lg font-sans">
+                  <div className="text-center border-b-2 border-[#f0b8b8] pb-4 mb-6">
                     <div className="flex flex-row-reverse w-full p-2">
                       <div className="w-9/12">
-                        <h1 className="text-10xl font-extrabold text-center">Sai Mobile Shop & Accessories</h1>
+                        <h1 className="text-10xl font-extrabold text-center my-2 text-[26px] text-[#d32f2f]">
+                          {businessProfile?.businessName || 'Business Name'}
+                        </h1>
                       </div>
                       <div className="w-3/12 flex items-center">
                         <img
                           className="block m-auto -top-4 w-full h-full"
-                          src="https://i.ibb.co/ymp7B3FW/logo-main.png"
-                          alt="Sai Mobile Shop Logo"
+                          src={businessProfile?.businessLogo ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessLogo}` : "Please upload a logo"}
+                          alt="Business Logo"
                         />
                       </div>
                     </div>
                     <div>
-                      <p>Shop No 3, Koregaon Phata, Ambethan.</p>
-                      <p>Phone: +91 9545199204 | Email: saienterprises9063@gmail.com</p>
+                      <p className="my-1 text-[#444]">{businessProfile?.businessAddress || 'Business Address'}</p>
+                      <p className="my-1 text-[#444]">
+                        Phone: {businessProfile?.businessMobile || ''} | Email: {businessProfile?.businessEmail || ''}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="invoice-details">
+                  <div className="w-[48%]">
                     <div>
                       <p><strong>Invoice Number:</strong> INV-{selectedBill._id.slice(-6).toUpperCase()}</p>
                       <p><strong>Date:</strong> {new Date(selectedBill.billDate).toDateString()}</p>
@@ -310,16 +274,16 @@ const Orders = () => {
                     </div>
                   </div>
 
-                  <div className="customer-details">
+                  <div className="flex justify-between mb-6 ">
                     <div>
-                      <p><strong>Customer Details:</strong></p>
-                      <p>{selectedBill.customer.name}</p>
-                      <p>Email: {selectedBill.customer.email}</p>
-                      <p>Mobile: {selectedBill.customer.mobile}</p>
+                      <p className="my-1 text-[#444]"><strong>Customer Details:</strong></p>
+                      <p className="my-1 text-[#444]">{selectedBill.customer.name}</p>
+                      <p className="my-1 text-[#444]">Email: {selectedBill.customer.email}</p>
+                      <p className="my-1 text-[#444]">Mobile: {selectedBill.customer.mobile}</p>
                     </div>
                   </div>
 
-                  <table>
+                  <table className="w-full border-collapse mb-6">
                     <thead>
                       <tr>
                         <th>Item</th>
@@ -331,28 +295,28 @@ const Orders = () => {
                     <tbody>
                       {selectedBill.order.map((item, i) => (
                         <tr key={i}>
-                          <td>{item.productName}</td>
-                          <td>{item.quantity}</td>
-                          <td>₹{item.price}</td>
-                          <td>₹{item.totalPrice}</td>
+                          <td className="border border-[#f0b8b8] p-2 text-left">{item.productName}</td>
+                          <td className="border border-[#f0b8b8] p-2 text-left">{item.quantity}</td>
+                          <td className="border border-[#f0b8b8] p-2 text-left">₹{item.price}</td>
+                          <td className="border border-[#f0b8b8] p-2 text-left">₹{item.totalPrice}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
 
-                  <div className="total">
+                  <div className="text-right font-bold text-[16px] text-[#b71c1c] mt-2">
                     <p>Total: ₹{selectedBill.total}</p>
                   </div>
 
-                  <div className="footer flex flex-col md:flex-row justify-between mt-0 items-center">
-                    <div>
-                      <p>Thank you for shopping at Sai Mobile Shop & Accessories!</p>
+                  <div className="text-center  text-[13px] text-[#666] border-t border-[#f0b8b8] pt-4 flex flex-col md:flex-row justify-between mt-0 items-center">
+                    <div className="text-left">
+                      <p>Thank you for shopping at {businessProfile?.businessName || 'Business Name'}!</p>
                       <p>Terms: All sales are final. Contact us for warranty details.</p>
                     </div>
-                    <div className="stamp">
+                    <div className="text-center mt-5">
                       <img
-                        className="w-24 h-24 md:w-32 md:h-32 object-contain"
-                        src="https://iili.io/FVXKZCP.md.png"
+                        className="w-24 h-24 md:w-32 md:h-32 object-contain max-w-[120px] my-[10px]"
+                        src={businessProfile?.businessStamp ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessStamp}` : "Please upload a stamp"}
                         alt="Shop Stamp"
                       />
                     </div>

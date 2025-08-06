@@ -80,7 +80,7 @@ const Signup = () => {
           <p>
             Already have an account?
             <Link
-              to="/login"
+              to="/"
               className="ml-2 text-blue-600 font-semibold hover:underline"
             >
               Login

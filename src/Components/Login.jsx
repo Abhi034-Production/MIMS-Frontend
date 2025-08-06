@@ -6,10 +6,10 @@ import axios from "axios";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { AuthContext } from "../Context/AuthContext";
 
+
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
@@ -19,7 +19,6 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
     if (!email || !password) {
       toast.warning("Please fill in all fields!");
       return;
@@ -46,17 +45,31 @@ const Login = () => {
           password,
         });
 
-        if (res.data === "success") {
-          // Fetch user data after successful login
-          const userRes = await axios.post(`https://mims-backend-x0i3.onrender.com/get-user`, {
-            email,
-          });
-          
-          login({ email, name: userRes.data.name });
+        // Support both string and object response from backend
+        if (res.data === "success" || (res.data && res.data.status === "success")) {
+          // If backend returns user name, use it; else fallback to get-user
+          let userName = res.data && res.data.name;
+          if (!userName) {
+            try {
+              const userRes = await axios.post(`https://mims-backend-x0i3.onrender.com/get-user`, { email });
+              userName = userRes.data.name;
+            } catch {
+              userName = email;
+            }
+          }
+          login({ email, name: userName });
           toast.success("Login successful");
-          navigate("/home");
+          // Check if business profile exists (same as password login)
+          const checkProfile = await axios.get(`https://mims-backend-x0i3.onrender.com/business-profile/${email}`, {
+            validateStatus: (status) => status === 200 || status === 404
+          });
+          if (checkProfile.status === 200 && checkProfile.data.status === "success") {
+            navigate("/home");
+          } else {
+            navigate("/business-profile");
+          }
         } else {
-          toast.error(res.data);
+          toast.error(res.data.message || res.data || "Login failed");
         }
       }
     } catch (err) {
@@ -83,7 +96,17 @@ const Login = () => {
       if (res.data.status === "success") {
         login({ email, name: res.data.name });
         toast.success("Login successful");
-        navigate("/home");
+        // Check if business profile exists (same as password login)
+        const checkProfile = await axios.get(`https://mims-backend-x0i3.onrender.com/business-profile/${email}`, {
+          validateStatus: (status) => status === 200 || status === 404
+        });
+        if (checkProfile.status === 200 && checkProfile.data.status === "success") {
+          navigate("/home");
+        } else {
+          // Suppress 404 error in console for new users
+          // (no error will be thrown, so nothing in console)
+          navigate("/business-profile");
+        }
       } else {
         toast.error(res.data.message || "OTP verification failed");
       }
@@ -162,7 +185,7 @@ const Login = () => {
             </button>
           </form>
         ) : (
-          useOtp && ( // Only show OTP step if using OTP
+          useOtp && (
             <div className="space-y-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Enter OTP sent to <b>{email}</b>

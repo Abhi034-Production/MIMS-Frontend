@@ -9,6 +9,8 @@ import AuthProvider from "./Context/AuthContext";
 import ThemeProvider from "./Context/ThemeContext";
 import PrivateRoute from "./Components/PrivateRoute";
 import BusinessProfile from './Pages/BusinessProfile'
+import BusinessDetail from './Pages/BusinessDetail'
+
 
 
 
@@ -38,9 +40,10 @@ function App() {
                 <Route path='report' element={<Report />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path='business-profile' element={<BusinessProfile />} />
-                <Route path='*' element={<NotFound />} />
+                <Route path='business-detail' element={<BusinessDetail />} />
                 <Route path='/loading' element={<Loading />} />
-              </Route>  
+              </Route>
+              <Route path='*' element={<NotFound />} />
             </Routes>
           </AuthProvider>
         </Suspense>

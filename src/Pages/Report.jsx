@@ -6,6 +6,7 @@ import jsPDF from "jspdf";
 import Loading from '../Components/Loading'
 import { Link } from "react-router-dom";
 import { MdOutlineHome, MdInventory } from "react-icons/md";
+import Spinner from '../Components/Spinner'
 import {
   BarChart,
   Bar,
@@ -39,13 +40,28 @@ const Report = () => {
 
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
+    // Fetch business profile first to get businessEmail
+    let timeout = setTimeout(() => {
       setLoadTimeoutExceeded(true);
     }, 20000);
 
-    axios
-      .get(`https://mims-backend-x0i3.onrender.com/bills`)
-      .then(({ data: bills }) => {
+    const userEmail = localStorage.getItem("userEmail");
+    if (!userEmail) {
+      setLoading(false);
+      return;
+    }
+
+    axios.get(`https://mims-backend-x0i3.onrender.com/business-profile/${userEmail}`)
+      .then(({ data }) => {
+        let businessEmail = data?.profile?.businessEmail;
+        // If no businessEmail, fallback to all bills
+        if (!businessEmail) {
+          return axios.get(`https://mims-backend-x0i3.onrender.com/bills`).then(({ data }) => ({ bills: data, businessEmail: null }));
+        }
+        return axios.get(`https://mims-backend-x0i3.onrender.com/bills?businessEmail=${encodeURIComponent(businessEmail)}`)
+          .then(({ data }) => ({ bills: data, businessEmail }));
+      })
+      .then(({ bills, businessEmail }) => {
         setAllBills(bills);
 
         const monthlySales = {};
@@ -98,7 +114,11 @@ const Report = () => {
         setTopProducts(top5);
 
         //  low stock products fetch
-        return axios.get('https://mims-backend-x0i3.onrender.com/products');
+        if (businessEmail) {
+          return axios.get(`https://mims-backend-x0i3.onrender.com/products?email=${encodeURIComponent(businessEmail)}`);
+        } else {
+          return axios.get(`https://mims-backend-x0i3.onrender.com/products`);
+        }
       })
       .then(({ data: products }) => {
         const lowStockItems = products.filter(product => product.quantity < 5)
@@ -171,35 +191,7 @@ const Report = () => {
     });
   };
 
-  if (loading) {
-    return (
-      <AdminLayout>
-        <div className="min-h-screen flex flex-col items-center justify-center text-gray-700 text-lg">
-          {loadTimeoutExceeded ? (
-            <div className="text-center">
-              <div className="mb-4 block m-auto">
-
-                <Loading />
-
-              </div>
-              {/* <button
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                onClick={() => window.location.reload()}
-              >
-                Reload Page
-              </button> */}
-            </div>
-          ) : (
-            <div className="mb-4 block m-auto">
-
-              <Loading />
-
-            </div>
-          )}
-        </div>
-      </AdminLayout>
-    );
-  }
+ if (loading) return <AdminLayout><div className="text-center py-10"><Spinner /></div></AdminLayout>;
 
   return (
     <>

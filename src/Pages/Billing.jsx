@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
+import { AuthContext } from "../Context/AuthContext";
 import axios from "axios";
 import AdminLayout from "../Components/AdminLayout";
 import { Link } from "react-router-dom";
@@ -6,6 +7,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import { MdOutlineHome, MdFileDownload } from 'react-icons/md';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+
 
 const Billing = () => {
   const [products, setProducts] = useState([]);
@@ -21,6 +23,21 @@ const Billing = () => {
   const [editPriceMode, setEditPriceMode] = useState(false);
   const [tempPrices, setTempPrices] = useState({});
   const invoiceRef = useRef(null);
+  const { user } = useContext(AuthContext);
+  const [businessProfile, setBusinessProfile] = useState(null);
+
+
+  useEffect(() => {
+    if (!user || !user.email) return;
+    fetch(`https://mims-backend-x0i3.onrender.com/business-profile/${user.email}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status === "success") {
+          setBusinessProfile(data.profile);
+        }
+      })
+      .catch(() => { });
+  }, [user]);
 
   useEffect(() => {
     axios.get("https://mims-backend-x0i3.onrender.com/products")
@@ -191,7 +208,7 @@ const Billing = () => {
         const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
 
         pdf.addImage(imgData, "JPEG", 0, 0, pageWidth, pdfHeight);
-        pdf.save(`Invoice.pdf`);
+        pdf.save(`invoice_${selectedBill._id}.pdf`);
       } catch (error) {
         toast.error("Error generating PDF");
       } finally {
@@ -240,7 +257,8 @@ const Billing = () => {
         totalPrice: item.totalPrice,
       })),
       total,
-    };
+    businessEmail: businessProfile?.businessEmail || ""
+  };
 
     try {
       await axios.post("https://mims-backend-x0i3.onrender.com/save-bill", billData);
@@ -275,6 +293,8 @@ const Billing = () => {
 
       <div className="p-4 md:p-6 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
         {/* Customer Form */}
+           <input type="hidden" name="businessEmail" value={businessProfile?.businessEmail || ''} readOnly />
+          
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6 transition-colors">
           {['name', 'mobile', 'email'].map((field, idx) => (
             <div key={idx}>
@@ -305,13 +325,16 @@ const Billing = () => {
                 className="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 bg-white dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">Select Product</option>
-                {products.map(product => (
-                  <option key={product._id} value={product._id}>
-                    {product.name} - ₹{product.price.toFixed(2)}
-                  </option>
-                ))}
+                {products
+                  .filter(product => !businessProfile || !businessProfile.businessEmail || product.email === businessProfile.businessEmail)
+                  .map(product => (
+                    <option key={product._id} value={product._id}>
+                      {product.name} - ₹{product.price.toFixed(2)}
+                    </option>
+                  ))}
               </select>
-            </div>
+              {/* Hidden input for business email */}
+             </div>
             {/* Quantity */}
             <div className="w-full md:w-40">
               <label className="block text-sm font-medium text-gray-600 dark:text-white mb-1">Quantity:</label>
@@ -337,42 +360,41 @@ const Billing = () => {
 
           <br />
 
-            {selectedProductId && (
-              <div className="md:col-span-2 flex w-full flex-col">
-                <label className="block text-sm font-medium text-gray-600 dark:text-white mb-1">Price:</label>
-                <div className="flex items-center gap-2 h-full">
-                  <button
-                    type="button"
-                    onClick={() => setEditPriceMode(!editPriceMode)}
-                    className={`h-12 px-4 rounded-md text-sm font-medium transition-colors flex-shrink-0 ${
-                      editPriceMode
-                        ? 'bg-green-600 text-white hover:bg-green-700'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600'
+          {selectedProductId && (
+            <div className="md:col-span-2 flex w-full flex-col">
+              <label className="block text-sm font-medium text-gray-600 dark:text-white mb-1">Price:</label>
+              <div className="flex items-center gap-2 h-full">
+                <button
+                  type="button"
+                  onClick={() => setEditPriceMode(!editPriceMode)}
+                  className={`h-12 px-4 rounded-md text-sm font-medium transition-colors flex-shrink-0 ${editPriceMode
+                      ? 'bg-green-600 text-white hover:bg-green-700'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600'
                     }`}
-                  >
-                    {editPriceMode ? 'Editing' : 'Edit'}
-                  </button>
-                  {editPriceMode && (
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="New Price"
-                      value={tempPrices[selectedProductId] || ''}
-                      onChange={(e) => {
-                        const newPrice = parseFloat(e.target.value);
-                        setTempPrices({
-                          ...tempPrices,
-                          [selectedProductId]: isNaN(newPrice) ? '' : newPrice
-                        });
-                      }}
+                >
+                  {editPriceMode ? 'Editing' : 'Edit'}
+                </button>
+                {editPriceMode && (
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="New Price"
+                    value={tempPrices[selectedProductId] || ''}
+                    onChange={(e) => {
+                      const newPrice = parseFloat(e.target.value);
+                      setTempPrices({
+                        ...tempPrices,
+                        [selectedProductId]: isNaN(newPrice) ? '' : newPrice
+                      });
+                    }}
                     className="h-12 w-full border border-gray-300 dark:border-gray-600 rounded-md p-4 text-base bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  )}
-                </div>
+                  />
+                )}
               </div>
-            )}
-            
+            </div>
+          )}
+
 
           {editPriceMode && (
             <div className="mt-3 flex justify-end">
@@ -387,32 +409,33 @@ const Billing = () => {
               </button>
             </div>
           )}
-        </div> 
-        
-        
-         {/* Order Table */}
-        <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6 transition-colors">
-          <table className="w-full text-sm md:text-base">
+        </div>
+
+
+        {/* Order Table */}
+        {order.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-2 mb-6 sm:p-0 transition-colors">
+          <table className="w-full text-center text-[10px] xs:text-xs sm:text-sm md:text-base table-fixed break-words">
             <thead className="bg-gray-100 dark:bg-gray-700">
               <tr>
-                <th className="px-4 py-2 dark:text-white">Product Name</th>
-                <th className="px-4 py-2 dark:text-white">Price</th>
-                <th className="px-4 py-2 dark:text-white">Quantity</th>
-                <th className="px-4 py-2 dark:text-white">Total</th>
-                <th className="px-4 py-2 dark:text-white">Actions</th>
+                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Product Name</th>
+                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Price</th>
+                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Quantity</th>
+                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Total</th>
+                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="dark:text-white">
               {order.map(item => (
-                <tr key={item._id} className="text-center border-b dark:text-white">
-                  <td className="py-2">{item.name}</td>
-                  <td className="py-2">₹{item.price.toFixed(2)}</td>
-                  <td className="py-2">{item.orderQuantity}</td>
-                  <td className="py-2">₹{item.totalPrice.toFixed(2)}</td>
+                <tr key={item._id} className="border-b">
+                  <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">{item.name}</td>
+                  <td className="py-1 px-1 sm:px-2 text-blue-600 font-semibold whitespace-normal break-words">₹{item.price.toFixed(2)}</td>
+                  <td className="py-1 px-1 sm:px-2 whitespace-normal break-words">{item.orderQuantity}</td>
+                  <td className="py-1 px-1 sm:px-2 whitespace-normal break-words">₹{item.totalPrice.toFixed(2)}</td>
                   <td className="py-2">
                     <button
                       onClick={() => removeFromOrder(item._id)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                      className="bg-red-500 hover:bg-red-600 py-1 px-1 sm:px-2 whitespace-normal break-words"
                     >
                       Remove
                     </button>
@@ -422,6 +445,7 @@ const Billing = () => {
             </tbody>
           </table>
         </div>
+        )}
 
         {/* Save Button */}
         {order.length > 0 && (
@@ -442,46 +466,52 @@ const Billing = () => {
         )}
 
         {/* Recent Orders Table */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 transition-colors">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-2 mb-6 sm:p-0 transition-colors">
           <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Recent Orders</h2>
-          <table className="w-full text-sm md:text-base">
-            <thead className="bg-gray-100 dark:bg-gray-700">
+          <table className="w-full text-center text-[10px] xs:text-xs sm:text-sm md:text-base table-fixed break-words">
+            <thead className="bg-gray-100 dark:bg-gray-700 dark:text-white">
               <tr>
-                <th className="text-center px-4 py-2 dark:text-white">Customer Name</th>
-                <th className="text-center px-4 py-2 dark:text-white">Products</th>
-                <th className="text-center px-4 py-2 dark:text-white">Total Price</th>
-                <th className="text-center px-4 py-2 dark:text-white">Date</th>
-                <th className="text-center px-4 py-2 dark:text-white">Invoice</th>
+                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Customer Name</th>
+                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Products</th>
+                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Total Price</th>
+                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Date</th>
+                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Invoice</th>
               </tr>
             </thead>
-            <tbody>
-              {recentBills.map((bill) => (
-                <tr key={bill._id} className="text-center border-b dark:text-white">
-                  <td className="py-2">{bill.customer.name}</td>
-                  <td className="text-left py-2">
-                    <ul className="list-disc pl-4">
-                      {bill.order.map((item, i) => (
-                        <li key={i} className="dark:text-white">{item.productName} (x{item.quantity}) - ₹{item.price}</li>
-                      ))}
-                    </ul>
-                  </td>
-                  <td className="py-2">₹{bill.total}</td>
-                  <td className="py-2">{new Date(bill.billDate).toLocaleString()}</td>
-                  <td className="py-2">
-                    <button onClick={() => handleDownloadInvoice(bill)}>
-                      <MdFileDownload className="text-blue-600 text-xl" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+            <tbody className="dark:text-white">
+              {recentBills
+                .filter(bill =>
+                  businessProfile && businessProfile.businessEmail
+                    ? bill.businessEmail === businessProfile.businessEmail
+                    : true
+                )
+                .map((bill) => (
+                  <tr key={bill._id} className="border-b">
+                    <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">{bill.customer.name}</td>
+                    <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">
+                      <ul className="list-decimal pl-4">
+                        {bill.order.map((item, i) => (
+                          <li key={i} className="dark:text-white">{item.productName} (x{item.quantity}) - ₹{item.price}</li>
+                        ))}
+                      </ul>
+                    </td>
+                    <td className="py-1 px-1 sm:px-2 text-blue-600 font-semibold whitespace-normal break-words">₹{bill.total}</td>
+                    <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">{new Date(bill.billDate).toLocaleString()}</td>
+                    <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">
+                      <button onClick={() => handleDownloadInvoice(bill)}>
+                        <MdFileDownload className="text-blue-600 text-xl" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
 
         {/* Invoice Preview Modal */}
-        {(showPreview || selectedBill) && (
+        {(showPreview || selectedBill) && selectedBill && (
           <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white p-4 rounded shadow-lg w-full max-w-[850px] max-h-[90vh] overflow-auto">
+            <div className="bg-white text-black p-4 rounded shadow-lg w-full max-w-[850px] max-h-[90vh] overflow-auto">
               <div ref={invoiceRef} className="p-4">
                 <style>{`  
               body {  
@@ -565,29 +595,34 @@ const Billing = () => {
                   <div className="header">
                     <div className="flex flex-row-reverse w-full p-2">
                       <div className="w-9/12">
-                        <h1 className="text-10xl font-extrabold text-center">Sai Mobile Shop & Accessories</h1>
+                        <h1 className="text-10xl font-extrabold text-center">
+                          {businessProfile?.businessName || 'Business Name'}
+                        </h1>
                       </div>
                       <div className="w-3/12 flex items-center">
                         <img
                           className="block m-auto -top-4 w-full h-full"
-                          src="https://i.ibb.co/ymp7B3FW/logo-main.png"
-                          alt="Sai Mobile Shop Logo"
+                          src={businessProfile?.businessLogo ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessLogo}` : "https://i.ibb.co/ymp7B3FW/logo-main.png"}
+                          alt="Business Logo"
                         />
                       </div>
                     </div>
                     <div>
-                      <p>Shop No 3, Koregaon Phata, Ambethan.</p>
-                      <p>Phone: +91 9545199204 | Email: saienterprises9063@gmail.com</p>
+                      <p>{businessProfile?.businessAddress || 'Business Address'}</p>
+                      <p>
+                        <span>Phone: {businessProfile?.businessMobile || ''}</span>
+                        <span> |  Email: {businessProfile?.businessEmail || ''}</span>
+                      </p>
                     </div>
                   </div>
 
                   <div className="invoice-details">
                     <div>
-                      <p><strong>Invoice Number:</strong> INV-{selectedBill._id.slice(-6).toUpperCase()}</p>
-                      <p><strong>Date:</strong> {new Date(selectedBill.billDate).toDateString()}</p>
+                      <p><strong>Invoice Number:</strong> INV-{selectedBill?._id ? selectedBill._id.slice(-6).toUpperCase() : ''}</p>
+                      <p><strong>Date:</strong> {selectedBill?.billDate ? new Date(selectedBill.billDate).toDateString() : ''}</p>
                     </div>
                     <div>
-                      <p className="hidden"><strong>Due Date:</strong> {new Date(new Date(selectedBill.billDate).getTime() + 7 * 86400000).toDateString()}</p>
+                      <p className="hidden"><strong>Due Date:</strong> {selectedBill?.billDate ? new Date(new Date(selectedBill.billDate).getTime() + 7 * 86400000).toDateString() : ''}</p>
                       <p><strong>Payment Terms:</strong> Payment Receipt</p>
                     </div>
                   </div>
@@ -595,9 +630,9 @@ const Billing = () => {
                   <div className="customer-details">
                     <div>
                       <p><strong>Customer Details:</strong></p>
-                      <p>{selectedBill.customer.name}</p>
-                      <p>Email: {selectedBill.customer.email}</p>
-                      <p>Mobile: {selectedBill.customer.mobile}</p>
+                      <p>{selectedBill?.customer?.name || ''}</p>
+                      <p>Email: {selectedBill?.customer?.email || ''}</p>
+                      <p>Mobile: {selectedBill?.customer?.mobile || ''}</p>
                     </div>
                   </div>
 
@@ -611,30 +646,34 @@ const Billing = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {selectedBill.order.map((item, i) => (
-                        <tr key={i}>
-                          <td>{item.productName}</td>
-                          <td>{item.quantity}</td>
-                          <td>₹{item.price}</td>
-                          <td>₹{item.totalPrice}</td>
-                        </tr>
-                      ))}
+                      {(selectedBill?.order && selectedBill.order.length > 0) ? (
+                        selectedBill.order.map((item2, i) => (
+                          <tr key={i}>
+                            <td>{item2.productName}</td>
+                            <td>{item2.quantity}</td>
+                            <td>₹{item2.price}</td>
+                            <td>₹{item2.totalPrice}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr><td colSpan="4" className="text-center">No products found</td></tr>
+                      )}
                     </tbody>
                   </table>
 
                   <div className="total">
-                    <p>Total: ₹{selectedBill.total}</p>
+                    <p>Total: ₹{selectedBill?.total || 0}</p>
                   </div>
 
                   <div className="footer flex flex-col md:flex-row justify-between mt-0 items-center">
-                    <div>
-                      <p>Thank you for shopping at Sai Mobile Shop & Accessories!</p>
+                    <div className="text-left">
+                      <p>Thank you for shopping at  ''!</p>
                       <p>Terms: All sales are final. Contact us for warranty details.</p>
                     </div>
                     <div className="stamp">
                       <img
                         className="w-24 h-24 md:w-32 md:h-32 object-contain"
-                        src="https://iili.io/FVXKZCP.md.png"
+                        src={businessProfile?.businessStamp ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessStamp}` : "https://iili.io/FVXKZCP.md.png"}
                         alt="Shop Stamp"
                       />
                     </div>
@@ -693,7 +732,6 @@ const Billing = () => {
 };
 
 export default Billing;
-
 
 
 

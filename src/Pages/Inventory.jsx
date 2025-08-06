@@ -1,28 +1,50 @@
 import React, { useState, useEffect } from "react";
+import { useContext } from "react";
+import { AuthContext } from "../Context/AuthContext";
 import AdminLayout from "../Components/AdminLayout";
 import axios from "axios";
 import { ToastContainer, toast } from 'react-toastify';
 import { Link } from "react-router-dom";
 import { MdOutlineHome } from 'react-icons/md'
 
+
 const Inventory = () => {
+  const { user } = useContext(AuthContext);
   const [products, setProducts] = useState([]);
-  const [newProduct, setNewProduct] = useState({ name: "", quantity: "", price: "" });
+  const [newProduct, setNewProduct] = useState({ name: "", quantity: "", price: "", email: "" });
   const [editingProduct, setEditingProduct] = useState(null);
+  const [businessEmail, setBusinessEmail] = useState("");
+
 
   useEffect(() => {
-    axios.get(`https://mims-backend-x0i3.onrender.com/products`)
+    if (!businessEmail) return;
+    axios.get(`https://mims-backend-x0i3.onrender.com/products?email=${encodeURIComponent(businessEmail)}`)
       .then((response) => setProducts(response.data))
       .catch((error) => console.error("Error fetching products:", error));
-  }, []);
+  }, [businessEmail]);
+
+  // Fetch business email from BusinessDetails
+  useEffect(() => {
+    if (user && user.email) {
+      fetch(`https://mims-backend-x0i3.onrender.com/business-profile/${user.email}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.status === "success" && data.profile && data.profile.businessEmail) {
+            setBusinessEmail(data.profile.businessEmail);
+            setNewProduct((prev) => ({ ...prev, email: data.profile.businessEmail }));
+          }
+        });
+    }
+  }, [user]);
 
   const addProduct = (e) => {
     e.preventDefault();
-    if (newProduct.name && newProduct.quantity && newProduct.price) {
-      axios.post(`https://mims-backend-x0i3.onrender.com/add-product`, newProduct)
+    if (newProduct.name && newProduct.quantity && newProduct.price && businessEmail) {
+      const productToSend = { ...newProduct, email: businessEmail };
+      axios.post(`https://mims-backend-x0i3.onrender.com/add-product`, productToSend)
         .then((response) => {
           setProducts([...products, response.data]);
-          setNewProduct({ name: "", quantity: "", price: "" });
+          setNewProduct({ name: "", quantity: "", price: "", email: businessEmail });
         })
         .catch((error) => console.error("Error adding product:", error));
       toast.success("Product Added Successfully..!");
@@ -46,8 +68,9 @@ const Inventory = () => {
 
   const saveEditProduct = (e) => {
     e.preventDefault();
-    if (editingProduct.name && editingProduct.quantity && editingProduct.price) {
-      axios.put(`https://mims-backend-x0i3.onrender.com/update-product/${editingProduct._id}`, editingProduct)
+    if (editingProduct.name && editingProduct.quantity && editingProduct.price && businessEmail) {
+      const productToSend = { ...editingProduct, email: businessEmail };
+      axios.put(`https://mims-backend-x0i3.onrender.com/update-product/${editingProduct._id}`, productToSend)
         .then((response) => {
           setProducts(products.map((product) =>
             product._id === editingProduct._id ? response.data : product
@@ -83,22 +106,44 @@ const Inventory = () => {
           className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md mb-6 transition-colors"
         >
           <div className="flex flex-col md:flex-row gap-4">
-            <div className="w-full">
+            <div className="w-full flex flex-col">
               <label className="dark:text-white block text-sm font-medium text-gray-600 mb-1">Product Name:</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Product Name"
+                  value={editingProduct ? editingProduct.name : newProduct.name}
+                  onChange={(e) =>
+                    editingProduct
+                      ? setEditingProduct({ ...editingProduct, name: e.target.value })
+                      : setNewProduct({ ...newProduct, name: e.target.value })
+                  }
+                  className="w-full border border-gray-300 rounded-md p-2 capitalize focus:outline-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-white "
+                  required
+                />
+                <input
+                  type="hidden"
+                  name="email"
+                  value={businessEmail}
+                  readOnly
+                />
+              </div>
+            </div>
+            <div className="w-full">
+              <label className="dark:text-white block text-sm font-medium text-gray-600 mb-1">Quantity:</label>
               <input
-                type="text"
-                placeholder="Product Name"
-                value={editingProduct ? editingProduct.name : newProduct.name}
+                type="number"
+                placeholder="Qty"
+                value={editingProduct ? editingProduct.quantity : newProduct.quantity}
                 onChange={(e) =>
                   editingProduct
-                    ? setEditingProduct({ ...editingProduct, name: e.target.value })
-                    : setNewProduct({ ...newProduct, name: e.target.value })
+                    ? setEditingProduct({ ...editingProduct, quantity: parseInt(e.target.value) })
+                    : setNewProduct({ ...newProduct, quantity: e.target.value })
                 }
-                className="w-full border border-gray-300 rounded-md p-2 capitalize focus:outline-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-white "
+                className="w-full border border-gray-300 rounded-md p-2 focus:outline-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-white text-xs"
                 required
               />
             </div>
-
             <div className="w-full">
               <label className="dark:text-white block text-sm font-medium text-gray-600 mb-1">Price:</label>
               <input
@@ -110,23 +155,7 @@ const Inventory = () => {
                     ? setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) })
                     : setNewProduct({ ...newProduct, price: e.target.value })
                 }
-                className="w-full border border-gray-300 rounded-md p-2 focus:outline-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
-                required
-              />
-            </div>
-
-            <div className="w-full">
-              <label className="dark:text-white block text-sm font-medium text-gray-600 mb-1">Quantity:</label>
-              <input
-                type="number"
-                placeholder="Quantity"
-                value={editingProduct ? editingProduct.quantity : newProduct.quantity}
-                onChange={(e) =>
-                  editingProduct
-                    ? setEditingProduct({ ...editingProduct, quantity: parseInt(e.target.value) })
-                    : setNewProduct({ ...newProduct, quantity: e.target.value })
-                }
-                className="w-full border  border-gray-300 rounded-md p-2 focus:outline-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
+                className="w-full border border-gray-300 rounded-md p-2 focus:outline-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-white text-xs"
                 required
               />
             </div>
@@ -153,41 +182,42 @@ const Inventory = () => {
         </form>
 
         {/* Product Table */}
-        <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6 transition-colors">
-          <table className="w-full  text-center text-sm md:text-base">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-2 mb-6 sm:p-0 transition-colors">
+          <table className="w-full text-center text-[10px] xs:text-xs sm:text-sm md:text-base table-fixed break-words">
+          
             <thead className="bg-gray-100 dark:bg-gray-700 dark:text-white">
               <tr>
-                <th className="px-4 py-4 dark:text-white">Product Name</th>
-                <th className="px-4 py-2 dark:text-white">Price</th>
-                <th className="px-4 py-2 dark:text-white">Quantity</th>
-                <th className="px-4 py-2 dark:text-white">Stocks</th>
-                <th className="px-4 py-2 dark:text-white">Actions</th>
+                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Product Name</th>
+                <th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Price</th>
+                <th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Qty</th>
+                <th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Stocks</th>
+                <th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Actions</th>
               </tr>
             </thead>
             <tbody className="dark:text-white">
               {products.map((product) => (
                 <tr key={product._id} className="border-b">
-                  <td className=" py-2 capitalize">{product.name}</td>
-                  <td className="py-2 text-blue-600 font-semibold">₹ {product.price.toFixed(2)}</td>
-                  <td className="py-2">{product.quantity}</td>
-                  <td className="py-2 font-semibold">
+                  <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">{product.name}</td>
+                  <td className="py-1 px-1 sm:px-2 text-blue-600 font-semibold whitespace-normal break-words">₹ {product.price.toFixed(2)}</td>
+                  <td className="py-1 px-1 sm:px-2 whitespace-normal break-words">{product.quantity}</td>
+                  <td className="py-1 px-1 sm:px-2 font-semibold whitespace-normal break-words">
                     {product.quantity === 0 ? (
                       <span className="text-red-500">Out of Stock</span>
                     ) : (
                       <span className="text-green-500">Available</span>
                     )}
                   </td>
-                  <td className="py-2">
-                    <div className="flex flex-wrap justify-center gap-2">
+                  <td className="py-1 px-1 sm:px-2 whitespace-normal break-words">
+                    <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
                       <button
                         onClick={() => startEditing(product)}
-                        className="bg-yellow-400 hover:bg-yellow-500 text-white px-4 py-1 rounded"
+                        className="bg-yellow-400 hover:bg-yellow-500 text-white px-2 sm:px-4 py-1 rounded text-xs sm:text-sm"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => deleteProduct(product._id)}
-                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded"
+                        className="bg-red-500 hover:bg-red-600 text-white px-2 sm:px-4 py-1 rounded text-xs sm:text-sm"
                       >
                         Delete
                       </button>
@@ -197,7 +227,7 @@ const Inventory = () => {
               ))}
               {products.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="text-gray-500 py-6">No products available.</td>
+                  <td colSpan="5" className="text-gray-500 py-6 text-center">No products available.</td>
                 </tr>
               )}
             </tbody>

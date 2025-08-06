@@ -1,0 +1,629 @@
+import React, { useState, useEffect } from "react";
+import AdminLayout from "../Components/AdminLayout";
+import axios from "axios";
+import { ToastContainer, toast } from 'react-toastify';
+import { Link } from "react-router-dom";
+import { MdOutlineHome } from 'react-icons/md'
+
+const Inventory = () => {
+  const [products, setProducts] = useState([]);
+  const [newProduct, setNewProduct] = useState({ name: "", quantity: "", price: "" });
+  const [editingProduct, setEditingProduct] = useState(null);
+
+  useEffect(() => {
+    axios.get(`https://mims-backend-x0i3.onrender.com/products`)
+      .then((response) => setProducts(response.data))
+      .catch((error) => console.error("Error fetching products:", error));
+  }, []);
+
+  const addProduct = (e) => {
+    e.preventDefault();
+    if (newProduct.name && newProduct.quantity && newProduct.price) {
+      axios.post(`https://mims-backend-x0i3.onrender.com/add-product`, newProduct)
+        .then((response) => {
+          setProducts([...products, response.data]);
+          setNewProduct({ name: "", quantity: "", price: "" });
+        })
+        .catch((error) => console.error("Error adding product:", error));
+      toast.success("Product Added Successfully..!");
+    } else {
+      toast.error("Please Fill All The Fields..!");
+    }
+  };
+
+  const deleteProduct = (id) => {
+    axios.delete(`https://mims-backend-x0i3.onrender.com/delete-product/${id}`)
+      .then(() => {
+        setProducts(products.filter((product) => product._id !== id));
+      })
+      .catch((error) => console.error("Error deleting product:", error));
+    toast.warning("Deleted Product..!")
+  };
+
+  const startEditing = (product) => {
+    setEditingProduct(product);
+  };
+
+  const saveEditProduct = (e) => {
+    e.preventDefault();
+    if (editingProduct.name && editingProduct.quantity && editingProduct.price) {
+      axios.put(`https://mims-backend-x0i3.onrender.com/update-product/${editingProduct._id}`, editingProduct)
+        .then((response) => {
+          setProducts(products.map((product) =>
+            product._id === editingProduct._id ? response.data : product
+          ));
+          setEditingProduct(null);
+        })
+        .catch((error) => console.error("Error updating product:", error));
+      toast.success("Successful Updating Product..!");
+    } else {
+      toast.error("Please fill all the fields");
+    }
+  };
+
+  return (
+
+    <AdminLayout>
+      {/* Breadcrumbs */}
+      <div className="text-sm text-gray-600 mb-4 dark:text-white">
+        <nav className="flex items-center space-x-2 dark:text-white">
+          <span className="text-gray-500 dark:text-white">
+            <Link to='/home' className="dark:text-white"><MdOutlineHome fontSize={20} /></Link>
+          </span>
+          <span className="text-gray-400 dark:text-white">/</span>
+          <span className="font-semibold dark:text-white text-gray-800 ">Inventory</span>
+        </nav>
+      </div>
+      <div className="dark:text-white p-4 md:p-6 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
+
+
+        {/* Form */}
+        <form
+          onSubmit={editingProduct ? saveEditProduct : addProduct}
+          className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md mb-6 transition-colors"
+        >
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="w-full">
+              <label className="dark:text-white block text-sm font-medium text-gray-600 mb-1">Product Name:</label>
+              <input
+                type="text"
+                placeholder="Product Name"
+                value={editingProduct ? editingProduct.name : newProduct.name}
+                onChange={(e) =>
+                  editingProduct
+                    ? setEditingProduct({ ...editingProduct, name: e.target.value })
+                    : setNewProduct({ ...newProduct, name: e.target.value })
+                }
+                className="w-full border border-gray-300 rounded-md p-2 capitalize focus:outline-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-white "
+                required
+              />
+            </div>
+            <div className="w-full">
+              <label className="dark:text-white block text-sm font-medium text-gray-600 mb-1">Quantity:</label>
+              <input
+                type="number"
+                placeholder="Qty"
+                value={editingProduct ? editingProduct.quantity : newProduct.quantity}
+                onChange={(e) =>
+                  editingProduct
+                    ? setEditingProduct({ ...editingProduct, quantity: parseInt(e.target.value) })
+                    : setNewProduct({ ...newProduct, quantity: e.target.value })
+                }
+                className="w-full border border-gray-300 rounded-md p-2 focus:outline-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-white text-xs"
+                required
+              />
+            </div>
+            <div className="w-full">
+              <label className="dark:text-white block text-sm font-medium text-gray-600 mb-1">Price:</label>
+              <input
+                type="number"
+                placeholder="Price"
+                value={editingProduct ? editingProduct.price : newProduct.price}
+                onChange={(e) =>
+                  editingProduct
+                    ? setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) })
+                    : setNewProduct({ ...newProduct, price: e.target.value })
+                }
+                className="w-full border border-gray-300 rounded-md p-2 focus:outline-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-white text-xs"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="mt-6 flex flex-wrap justify-center gap-4">
+            <button
+              type="submit"
+              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition"
+            >
+              {editingProduct ? "Save" : "Add Product"}
+            </button>
+            {editingProduct && (
+              <button
+                type="button"
+                onClick={() => setEditingProduct(null)}
+                className="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+        </form>
+
+        {/* Product Table */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-2 mb-6 sm:p-0 transition-colors">
+          <table className="w-full text-center text-[10px] xs:text-xs sm:text-sm md:text-base table-fixed break-words">
+          
+            <thead className="bg-gray-100 dark:bg-gray-700 dark:text-white">
+              <tr>
+                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Product Name</th>
+                <th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Price</th>
+                <th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Qty</th>
+                <th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Stocks</th>
+                <th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="dark:text-white">
+              {products.map((product) => (
+                <tr key={product._id} className="border-b">
+                  <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">{product.name}</td>
+                  <td className="py-1 px-1 sm:px-2 text-blue-600 font-semibold whitespace-normal break-words">₹ {product.price.toFixed(2)}</td>
+                  <td className="py-1 px-1 sm:px-2 whitespace-normal break-words">{product.quantity}</td>
+                  <td className="py-1 px-1 sm:px-2 font-semibold whitespace-normal break-words">
+                    {product.quantity === 0 ? (
+                      <span className="text-red-500">Out of Stock</span>
+                    ) : (
+                      <span className="text-green-500">Available</span>
+                    )}
+                  </td>
+                  <td className="py-1 px-1 sm:px-2 whitespace-normal break-words">
+                    <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
+                      <button
+                        onClick={() => startEditing(product)}
+                        className="bg-yellow-400 hover:bg-yellow-500 text-white px-2 sm:px-4 py-1 rounded text-xs sm:text-sm"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => deleteProduct(product._id)}
+                        className="bg-red-500 hover:bg-red-600 text-white px-2 sm:px-4 py-1 rounded text-xs sm:text-sm"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {products.length === 0 && (
+                <tr>
+                  <td colSpan="5" className="text-gray-500 py-6 text-center">No products available.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <ToastContainer />
+      </div>
+    </AdminLayout>
+  );
+};
+
+export default Inventory;
+
+
+
+ const mongoose = require("mongoose");
+// import mongoose from 'mongoose'
+
+const ProductSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  quantity: { type: Number, required: true },
+  price: { type: Number, required: true },
+});
+
+const ProductModel = mongoose.model("Product", ProductSchema);
+module.exports = ProductModel;
+
+
+
+
+require("dotenv").config();
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const bcrypt = require("bcrypt");
+const SignupModel = require("./models/adminsignup");
+const ProductModel = require("./models/product");
+
+const nodemailer = require("nodemailer");
+const BusinessProfile = require("./models/businessprofile");
+const multer = require("multer");
+const path = require("path");
+
+// Multer config for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, "uploads"));
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname);
+  }
+});
+const upload = multer({ storage });
+
+// Ensure uploads directory exists
+const fs = require("fs");
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
+
+const app = express();
+
+const allowedOrigins = ["https://mimsp.netlify.app" , "http://localhost:5173"];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+  })
+);
+
+
+app.use(express.json());
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+let otpStore = {};
+
+
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB Connected"))
+  .catch(err => console.log("MongoDB Connection Error:", err));
+
+
+app.get("/run", (req, res) => {
+  res.send("Backend is running!");
+});
+
+
+app.post("/business-profile", upload.fields([
+  { name: "businessLogo", maxCount: 1 },
+  { name: "businessStamp", maxCount: 1 }
+]), async (req, res) => {
+  try {
+    const {
+      userEmail,
+      businessName,
+      businessMobile,
+      businessAddress,
+      businessEmail,
+      businessCategory,
+    } = req.body;
+
+    // File paths
+    let businessLogo = null;
+    let businessStamp = null;
+    if (req.files["businessLogo"]) {
+      businessLogo = `/uploads/${req.files["businessLogo"][0].filename}`;
+    }
+    if (req.files["businessStamp"]) {
+      businessStamp = `/uploads/${req.files["businessStamp"][0].filename}`;
+    }
+
+    // Upsert: update if exists, else create
+    const update = {
+      businessName,
+      businessMobile,
+      businessAddress,
+      businessEmail,
+      businessCategory,
+    };
+    if (businessLogo) update.businessLogo = businessLogo;
+    if (businessStamp) update.businessStamp = businessStamp;
+
+    const profile = await BusinessProfile.findOneAndUpdate(
+      { userEmail },
+      update,
+      { new: true, upsert: true }
+    );
+    console.log("[ALERT] Business profile created/updated for:", userEmail);
+    res.json({ status: "success", profile });
+  } catch (error) {
+    console.error("[ALERT] Error in /business-profile:", error.message);
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+// Get business profile by user email
+app.get("/business-profile/:userEmail", async (req, res) => {
+  try {
+    const { userEmail } = req.params;
+    const profile = await BusinessProfile.findOne({ userEmail });
+    if (!profile) {
+      console.log(`[ALERT] Business profile not found for: ${userEmail}`);
+      return res.status(404).json({ status: "not_found" });
+    }
+    console.log(`[ALERT] Business profile fetched for: ${userEmail}`);
+    res.json({ status: "success", profile });
+  } catch (error) {
+    console.error("[ALERT] Error in GET /business-profile/:userEmail:", error.message);
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+// Update business profile (edit)
+app.put("/business-profile/:userEmail", upload.fields([
+  { name: "businessLogo", maxCount: 1 },
+  { name: "businessStamp", maxCount: 1 }
+]), async (req, res) => {
+  try {
+    const { userEmail } = req.params;
+    const {
+      businessName,
+      businessMobile,
+      businessAddress,
+      businessEmail,
+      businessCategory,
+    } = req.body;
+
+    // File paths
+    let businessLogo = null;
+    let businessStamp = null;
+    if (req.files["businessLogo"]) {
+      businessLogo = `/uploads/${req.files["businessLogo"][0].filename}`;
+    }
+    if (req.files["businessStamp"]) {
+      businessStamp = `/uploads/${req.files["businessStamp"][0].filename}`;
+    }
+
+    // Build update object
+    const update = {
+      businessName,
+      businessMobile,
+      businessAddress,
+      businessEmail,
+      businessCategory,
+    };
+    if (businessLogo) update.businessLogo = businessLogo;
+    if (businessStamp) update.businessStamp = businessStamp;
+
+    const profile = await BusinessProfile.findOneAndUpdate(
+      { userEmail },
+      update,
+      { new: true }
+    );
+    if (!profile) {
+      return res.status(404).json({ status: "not_found" });
+    }
+    console.log("[ALERT] Business profile updated for:", userEmail);
+    res.json({ status: "success", profile });
+  } catch (error) {
+    console.error("[ALERT] Error in PUT /business-profile/:userEmail:", error.message);
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+// Non-OTP Login
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  const user = await SignupModel.findOne({ email });
+
+  if (user) {
+    if (await bcrypt.compare(password, user.password)) {
+      res.send("success");
+    } else {
+      res.send("incorrect password");
+    }
+  } else {
+    res.send("no record exists");
+  }
+});
+
+// Get user data
+app.post("/get-user", async (req, res) => {
+  const { email } = req.body;
+  const user = await SignupModel.findOne({ email });
+
+  if (user) {
+    res.json({ status: "success", name: user.name });
+  } else {
+    res.status(404).json({ status: "error", message: "User not found" });
+  }
+});
+
+// Update Admin Info
+app.put("/update-admin", async (req, res) => {
+  const { email, name, password } = req.body;
+
+  try {
+    const update = { name };
+    if (password) {
+      update.password = await bcrypt.hash(password, 10);
+    }
+
+    await SignupModel.findOneAndUpdate({ email }, update);
+    res.json({ status: "success" });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  const user = await SignupModel.findOne({ email });
+
+  if (user) {
+    if (await bcrypt.compare(password, user.password)) {
+      res.json("success");
+    } else {
+      res.json("incorrect password");
+    }
+  } else {
+    res.json("no record exists");
+  }
+});
+
+app.post("/register", async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await SignupModel.create({ name, email, password: hashedPassword });
+    res.json(newUser);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+// Add Products
+app.post("/add-product", async (req, res) => {
+  try {
+    const { name, quantity, price } = req.body;
+    const newProduct = await ProductModel.create({ name, quantity, price });
+    res.json(newProduct);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Fetch All Products
+app.get("/products", async (req, res) => {
+  try {
+    const products = await ProductModel.find();
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete Product
+app.delete("/delete-product/:id", async (req, res) => {
+  try {
+    await ProductModel.findByIdAndDelete(req.params.id);
+    res.json({ message: "Product deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update Product
+app.put("/update-product/:id", async (req, res) => {
+  try {
+    const { name, quantity, price } = req.body;
+    const updatedProduct = await ProductModel.findByIdAndUpdate(req.params.id, { name, quantity, price }, { new: true });
+    res.json(updatedProduct);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+const billSchema = new mongoose.Schema({
+  customer: {
+    name: String,
+    mobile: String,
+    email: String,
+  },
+  billDate: String,
+  order: [
+    {
+      productName: String,
+      price: Number,
+      quantity: Number,
+      totalPrice: Number,
+    },
+  ],
+  total: Number,
+});
+
+const Bill = mongoose.model("Bill", billSchema);
+
+app.post("/save-bill", async (req, res) => {
+  try {
+    const newBill = new Bill(req.body);
+    await newBill.save();
+
+    for (const item of req.body.order) {
+      const updatedProduct = await ProductModel.findOneAndUpdate(
+        { name: item.productName },
+        { $inc: { quantity: -item.quantity } },
+        { new: true }
+      );
+      if (updatedProduct.quantity <= 0) {
+        await ProductModel.findByIdAndUpdate(updatedProduct._id, { quantity: 0 });
+      }
+    }
+
+    res.status(201).json({ message: "Bill saved & inventory updated successfully!" });
+  } catch (error) {
+    res.status(500).json({ error: "Error saving bill or updating inventory." });
+  }
+});
+
+app.get("/bills", async (req, res) => {
+  try {
+    const bills = await Bill.find();
+    res.json(bills);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch bills" });
+  }
+});
+
+app.get("/top-selling-products", async (req, res) => {
+  try {
+    const bills = await Bill.find();
+    const products = await ProductModel.find();
+
+    let productSales = {};
+
+    bills.forEach((bill) => {
+      bill.order.forEach((item) => {
+        if (productSales[item.productName]) {
+          productSales[item.productName] += item.quantity;
+        } else {
+          productSales[item.productName] = item.quantity;
+        }
+      });
+    });
+
+    const productDetails = products.map((product) => {
+      const soldQuantity = productSales[product.name] || 0;
+      const isOutOfStock = product.quantity <= 0;
+      return {
+        name: product.name,
+        quantitySold: soldQuantity,
+        quantityInStock: product.quantity,
+        isOutOfStock
+      };
+    });
+
+    const sortedProducts = productDetails
+      .sort((a, b) => b.quantitySold - a.quantitySold);
+
+    res.json(sortedProducts);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch top-selling products." });
+  }
+});
+
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
+
