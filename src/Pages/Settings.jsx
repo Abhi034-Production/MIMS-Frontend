@@ -21,7 +21,7 @@ const Settings = () => {
       setName(user.name || "");
     } else {
       toast.error("Unauthorized. Redirecting to login...");
-      navigate("/login");
+      navigate("/");
     }
   }, [user, navigate]);
 

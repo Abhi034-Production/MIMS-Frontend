@@ -22,7 +22,6 @@ const Orders = () => {
 
 
 
-  
   useEffect(() => {
     if (!user || !user.email) return;
     fetch(`https://mims-backend-x0i3.onrender.com/business-profile/${user.email}`)
@@ -38,10 +37,8 @@ const Orders = () => {
 useEffect(() => {
   axios.get(`https://mims-backend-x0i3.onrender.com/bills`)
     .then((res) => {
-      // Sort bills in descending order (most recent first)
       const sorted = res.data.sort((a, b) => new Date(b.billDate) - new Date(a.billDate));
       if (businessProfile && businessProfile.businessEmail) {
-        // Only show bills that belong to the current business email
         const filtered = sorted.filter(bill => bill.businessEmail && bill.businessEmail === businessProfile.businessEmail);
         setBills(filtered);
         setFilteredBills(filtered);
@@ -83,24 +80,6 @@ useEffect(() => {
     setSelectedBill(null);
   };
 
-  const downloadInvoiceAsImage = () => {
-    const buttons = document.querySelector("#invoice-actions");
-    buttons.style.display = "none";
-
-    html2canvas(invoiceRef.current, {
-      useCORS: true,
-      scale: 2,
-      backgroundColor: "#FFFFFF"
-    }).then((canvas) => {
-      const link = document.createElement("a");
-      link.download = `Invoice_${selectedBill._id}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-
-      buttons.style.display = "flex";
-      closeModal();
-    });
-  };
 
   const downloadInvoiceAsPDF = () => {
     if (!imagesLoaded) {
@@ -331,12 +310,7 @@ useEffect(() => {
                 >
                   Download PDF
                 </button>
-                <button
-                  onClick={downloadInvoiceAsImage}
-                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-                >
-                  Download Image
-                </button>
+              
                 <button
                   onClick={closeModal}
                   className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"

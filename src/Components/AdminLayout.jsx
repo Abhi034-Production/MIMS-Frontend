@@ -2,7 +2,7 @@ import React, { useState, useContext, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AuthContext } from "../Context/AuthContext";
 import { MdDashboard, MdInventory, MdMoney, MdList, MdLogout, MdOutlineClose, MdOutlineLightMode, MdNotificationsNone, MdOutlineSettings } from "react-icons/md";
-import { TbListDetails } from "react-icons/tb" ;
+import { TbListDetails } from "react-icons/tb";
 import { BiSolidReport } from "react-icons/bi";
 
 const AdminLayout = ({ children }) => {
@@ -16,11 +16,11 @@ const AdminLayout = ({ children }) => {
         { label: 'Inventory', to: '/inventory', icon: <MdInventory /> },
         { label: 'Billing', to: '/billing', icon: <MdMoney /> },
         { label: 'Orders', to: '/orders', icon: <MdList /> },
-        { label: 'Reports', to: '/report', icon: <BiSolidReport /> },
+        // { label: 'Reports', to: '/report', icon: <BiSolidReport /> },
         { label: 'Business Detail', to: '/business-detail', icon: <TbListDetails /> },
     ];
 
-     useEffect(() => {
+    useEffect(() => {
         if (!user || !user.email) return;
         fetch(`https://mims-backend-x0i3.onrender.com/business-profile/${user.email}`)
             .then((res) => res.json())
@@ -33,7 +33,7 @@ const AdminLayout = ({ children }) => {
             })
             .catch(() => setBusinessName(""));
     }, [user]);
-    
+
     const handleNavToggle = () => {
         setIsNavOpen(!isNavOpen);
     };
@@ -57,8 +57,9 @@ const AdminLayout = ({ children }) => {
                     <nav className="w-full flex flex-col h-full">
                         <ul className="w-full flex-1">
                             <h1 className="text-xl p-1 mb-1 text-white font-semibold">
-                                InventoryMastermind
+                                <img src="https://i.ibb.co/MkqjQ2cG/logo.png" />
                             </h1>
+
                             <hr className="mb-3 p-2" />
                             {Nav_Links.map((item, index) => (
                                 <li key={index} className="w-full">
@@ -78,7 +79,7 @@ const AdminLayout = ({ children }) => {
                                 </li>
                             ))}
                         </ul>
-                        
+
                         <button
                             onClick={logout}
                             className="w-full flex items-center justify-center gap-2 px-4 py-2 mt-auto
@@ -110,7 +111,7 @@ const AdminLayout = ({ children }) => {
                             <button className="hover:text-blue-500 text-2xl transition hidden"><MdOutlineLightMode /></button>
                             <button className="hover:text-blue-500 text-2xl transition"><MdNotificationsNone /></button>
                             <button className="hover:text-blue-500 text-2xl transition">
-                            <Link to='/settings'><MdOutlineSettings /></Link>
+                                <Link to='/settings'><MdOutlineSettings /></Link>
                             </button>
                         </div>
                     </div>
@@ -118,14 +119,11 @@ const AdminLayout = ({ children }) => {
                     {/* Page Content - Scrollable Area */}
                     <div className="flex-1 overflow-y-auto p-4 bg-gray-100 dark:bg-gray-900 transition-colors">
                         {children}
-                        
+
                         {/* Footer - Fixed to bottom of content area */}
-                        <div className="p-4 text-center dark:text-white text-gray-600 text-sm mt-4">
-                            Made with ❤️ by Abhishek Shinde <br />
-                            📧 <a href="mailto:abhishekshinde034@gmail.com"
-                                className="text-blue-500 dark:text-slate-200 hover:underline">
-                                abhishekshinde034@gmail.com
-                            </a>
+                        <div className="p-4 flex items-center justify-center gap-2 text-sm text-gray-600 dark:text-white mt-4">
+                            <span>Powered by</span>
+                            <img className="w-20 h-20 object-contain" src="https://i.ibb.co/MkqjQ2cG/logo.png" alt="Logo" />
                         </div>
                     </div>
                 </main>

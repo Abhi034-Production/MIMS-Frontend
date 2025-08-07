@@ -5,7 +5,8 @@ import AdminLayout from "../Components/AdminLayout";
 import axios from "axios";
 import { ToastContainer, toast } from 'react-toastify';
 import { Link } from "react-router-dom";
-import { MdOutlineHome } from 'react-icons/md'
+import { MdOutlineHome } from 'react-icons/md';
+import  Spinner from "../Components/Spinner"; 
 
 
 const Inventory = () => {
@@ -85,7 +86,6 @@ const Inventory = () => {
   };
 
   return (
-
     <AdminLayout>
       {/* Breadcrumbs */}
       <div className="text-sm text-gray-600 mb-4 dark:text-white">
@@ -98,7 +98,6 @@ const Inventory = () => {
         </nav>
       </div>
       <div className="dark:text-white p-4 md:p-6 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
-
 
         {/* Form */}
         <form
@@ -183,55 +182,56 @@ const Inventory = () => {
 
         {/* Product Table */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-2 mb-6 sm:p-0 transition-colors">
-          <table className="w-full text-center text-[10px] xs:text-xs sm:text-sm md:text-base table-fixed break-words">
-          
-            <thead className="bg-gray-100 dark:bg-gray-700 dark:text-white">
-              <tr>
-                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Product Name</th>
-                <th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Price</th>
-                <th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Qty</th>
-                <th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Stocks</th>
-                <th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="dark:text-white">
-              {products.map((product) => (
-                <tr key={product._id} className="border-b">
-                  <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">{product.name}</td>
-                  <td className="py-1 px-1 sm:px-2 text-blue-600 font-semibold whitespace-normal break-words">₹ {product.price.toFixed(2)}</td>
-                  <td className="py-1 px-1 sm:px-2 whitespace-normal break-words">{product.quantity}</td>
-                  <td className="py-1 px-1 sm:px-2 font-semibold whitespace-normal break-words">
-                    {product.quantity === 0 ? (
-                      <span className="text-red-500">Out of Stock</span>
-                    ) : (
-                      <span className="text-green-500">Available</span>
-                    )}
-                  </td>
-                  <td className="py-1 px-1 sm:px-2 whitespace-normal break-words">
-                    <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
-                      <button
-                        onClick={() => startEditing(product)}
-                        className="bg-yellow-400 hover:bg-yellow-500 text-white px-2 sm:px-4 py-1 rounded text-xs sm:text-sm"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => deleteProduct(product._id)}
-                        className="bg-red-500 hover:bg-red-600 text-white px-2 sm:px-4 py-1 rounded text-xs sm:text-sm"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {products.length === 0 && (
+          {products.length === 0 ? (
+            <>
+              <Spinner />
+             
+            </>
+          ) : (
+            <table className="w-full text-center text-[10px] xs:text-xs sm:text-sm md:text-base table-fixed break-words">
+              <thead className="bg-gray-100 dark:bg-gray-700 dark:text-white">
                 <tr>
-                  <td colSpan="5" className="text-gray-500 py-6 text-center">No products available.</td>
+                  <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Product Name</th>
+                  <th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Price</th>
+                  <th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Qty</th>
+                  <th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Stocks</th>
+                  <th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Actions</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="dark:text-white">
+                {products.map((product) => (
+                  <tr key={product._id} className="border-b">
+                    <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">{product.name}</td>
+                    <td className="py-1 px-1 sm:px-2 text-blue-600 font-semibold whitespace-normal break-words">₹ {product.price.toFixed(2)}</td>
+                    <td className="py-1 px-1 sm:px-2 whitespace-normal break-words">{product.quantity}</td>
+                    <td className="py-1 px-1 sm:px-2 font-semibold whitespace-normal break-words">
+                      {product.quantity === 0 ? (
+                        <span className="text-red-500">Out of Stock</span>
+                      ) : (
+                        <span className="text-green-500">Available</span>
+                      )}
+                    </td>
+                    <td className="py-1 px-1 sm:px-2 whitespace-normal break-words">
+                      <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
+                        <button
+                          onClick={() => startEditing(product)}
+                          className="bg-yellow-400 hover:bg-yellow-500 text-white px-2 sm:px-4 py-1 rounded text-xs sm:text-sm"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => deleteProduct(product._id)}
+                          className="bg-red-500 hover:bg-red-600 text-white px-2 sm:px-4 py-1 rounded text-xs sm:text-sm"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
         <ToastContainer />

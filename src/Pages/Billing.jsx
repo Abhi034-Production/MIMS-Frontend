@@ -7,6 +7,8 @@ import { ToastContainer, toast } from 'react-toastify';
 import { MdOutlineHome, MdFileDownload } from 'react-icons/md';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import Spinner from "../Components/Spinner";
+
 
 
 const Billing = () => {
@@ -66,12 +68,9 @@ const Billing = () => {
   const addToOrder = () => {
     const product = products.find((p) => p._id === selectedProductId);
     if (!product) return;
-
     const currentPrice = tempPrices[selectedProductId] || product.price;
-
     if (quantity > 0 && quantity <= product.quantity) {
       const existingProduct = order.find((item) => item._id === product._id);
-
       if (existingProduct) {
         const updatedOrder = order.map((item) =>
           item._id === product._id
@@ -466,49 +465,58 @@ const Billing = () => {
         )}
 
         {/* Recent Orders Table */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-2 mb-6 sm:p-0 transition-colors">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Recent Orders</h2>
-          <table className="w-full text-center text-[10px] xs:text-xs sm:text-sm md:text-base table-fixed break-words">
-            <thead className="bg-gray-100 dark:bg-gray-700 dark:text-white">
-              <tr>
-                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Customer Name</th>
-                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Products</th>
-                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Total Price</th>
-                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Date</th>
-                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Invoice</th>
-              </tr>
-            </thead>
-            <tbody className="dark:text-white">
-              {recentBills
-                .filter(bill =>
-                  businessProfile && businessProfile.businessEmail
-                    ? bill.businessEmail === businessProfile.businessEmail
-                    : true
-                )
-                .map((bill) => (
-                  <tr key={bill._id} className="border-b">
-                    <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">{bill.customer.name}</td>
-                    <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">
-                      <ul className="list-decimal pl-4">
-                        {bill.order.map((item, i) => (
-                          <li key={i} className="dark:text-white">{item.productName} (x{item.quantity}) - ₹{item.price}</li>
-                        ))}
-                      </ul>
-                    </td>
-                    <td className="py-1 px-1 sm:px-2 text-blue-600 font-semibold whitespace-normal break-words">₹{bill.total}</td>
-                    <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">{new Date(bill.billDate).toLocaleString()}</td>
-                    <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">
-                      <button onClick={() => handleDownloadInvoice(bill)}>
-                        <MdFileDownload className="text-blue-600 text-xl" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
+        {recentBills.length === 0 ? (
+          <div className="flex justify-center items-center py-10">
+            <Spinner />
+            <span className="ml-2 text-gray-500 dark:text-gray-300 hidden">Loading... (wait 10 seconds for more data)</span>
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-2 mb-6 sm:p-0 transition-colors">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Recent Orders</h2>
+            <table className="w-full text-center text-[10px] xs:text-xs sm:text-sm md:text-base table-fixed break-words">
+              <thead className="bg-gray-100 dark:bg-gray-700 dark:text-white">
+                <tr>
+                  <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Customer Name</th>
+                  <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Products</th>
+                  <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Total Price</th>
+                  <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Date</th>
+                  <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Invoice</th>
+                </tr>
+              </thead>
+              <tbody className="dark:text-white">
+                {recentBills
+                  .filter(bill =>
+                    businessProfile && businessProfile.businessEmail
+                      ? bill.businessEmail === businessProfile.businessEmail
+                      : true
+                  )
+                  .map((bill) => (
+                    <tr key={bill._id} className="border-b">
+                      <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">{bill.customer.name}</td>
+                      <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">
+                        <ul className="list-decimal pl-4">
+                          {bill.order.map((item, i) => (
+                            <li key={i} className="dark:text-white">{item.productName} (x{item.quantity}) - ₹{item.price}</li>
+                          ))}
+                        </ul>
+                      </td>
+                      <td className="py-1 px-1 sm:px-2 text-blue-600 font-semibold whitespace-normal break-words">₹{bill.total}</td>
+                      <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">{new Date(bill.billDate).toLocaleString()}</td>
+                      <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">
+                        <button onClick={() => handleDownloadInvoice(bill)}>
+                          <MdFileDownload className="text-blue-600 text-xl" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+     
 
-        {/* Invoice Preview Modal */}
+
+     
         {(showPreview || selectedBill) && selectedBill && (
           <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
             <div className="bg-white text-black p-4 rounded shadow-lg w-full max-w-[850px] max-h-[90vh] overflow-auto">

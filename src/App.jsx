@@ -37,7 +37,7 @@ function App() {
                 <Route path='inventory' element={<Inventory />} />
                 <Route path='billing' element={<Billing />} />
                 <Route path='orders' element={<Orders />} />
-                <Route path='report' element={<Report />} />
+                {/* <Route path='report' element={<Report />} /> */}
                 <Route path="settings" element={<Settings />} />
                 <Route path='business-profile' element={<BusinessProfile />} />
                 <Route path='business-detail' element={<BusinessDetail />} />
