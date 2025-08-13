@@ -13,13 +13,12 @@ const BusinessDetail = () => {
   const [form, setForm] = useState({});
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
-
   const isEditingRef = useRef(false);
 
   useEffect(() => {
     if (!user || !user.email) return;
     setLoading(true);
-    fetch(`https://mims-backend-x0i3.onrender.com/business-profile/${user.email}`)
+    fetch(`http://localhost:3001/business-profile/${user.email}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.status === "success") {
@@ -68,7 +67,7 @@ const BusinessDetail = () => {
     formData.append("userEmail", user.email);
 
     try {
-      const res = await fetch("https://mims-backend-x0i3.onrender.com/business-profile", {
+      const res = await fetch("http://localhost:3001/business-profile", {
         method: "POST",
         body: formData,
       });
@@ -154,7 +153,7 @@ const BusinessDetail = () => {
                   {editMode ? (
                     <input type="file" name="businessLogo" accept="image/*" onChange={handleFileChange} className="w-28 sm:w-36 md:w-44 text-gray-700 dark:text-white" />
                   ) : profile.businessLogo ? (
-                    <img src={`https://mims-backend-x0i3.onrender.com${profile.businessLogo}`} alt="Logo" className="h-20 w-20 sm:h-28 sm:w-28 md:h-32 md:w-32 object-cover rounded-full border-2 border-blue-300 dark:border-blue-700 shadow bg-white" />
+                    <img src={`http://localhost:3001${profile.businessLogo}`} alt="Logo" className="h-20 w-20 sm:h-28 sm:w-28 md:h-32 md:w-32 object-cover rounded-full border-2 border-blue-300 dark:border-blue-700 shadow bg-white" />
                   ) : (
                     <span className="text-gray-400 italic">No logo</span>
                   )}
@@ -164,7 +163,7 @@ const BusinessDetail = () => {
                   {editMode ? (
                     <input type="file" name="businessStamp" accept="image/*" onChange={handleFileChange} className="w-28 sm:w-36 md:w-44 text-gray-700 dark:text-white" />
                   ) : profile.businessStamp ? (
-                    <img src={`https://mims-backend-x0i3.onrender.com${profile.businessStamp}`} alt="Stamp" className="h-20 w-20 sm:h-28 sm:w-28 md:h-32 md:w-32 object-cover rounded-full border-2 border-blue-300 dark:border-blue-700 shadow bg-white" />
+                    <img src={`http://localhost:3001${profile.businessStamp}`} alt="Stamp" className="h-20 w-20 sm:h-28 sm:w-28 md:h-32 md:w-32 object-cover rounded-full border-2 border-blue-300 dark:border-blue-700 shadow bg-white" />
                   ) : (
                     <span className="text-gray-400 italic">No stamp/sign</span>
                   )}

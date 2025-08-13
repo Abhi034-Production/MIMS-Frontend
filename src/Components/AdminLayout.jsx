@@ -10,6 +10,7 @@ const AdminLayout = ({ children }) => {
     const { user, logout } = useContext(AuthContext);
     const [businessName, setBusinessName] = useState("");
     const [isNavOpen, setIsNavOpen] = useState(false);
+    const [businessCategory, setBusinessCategory] = useState("");
 
     const Nav_Links = [
         { label: 'Dashboard', to: '/home', icon: <MdDashboard /> },
@@ -22,21 +23,101 @@ const AdminLayout = ({ children }) => {
 
     useEffect(() => {
         if (!user || !user.email) return;
-        fetch(`https://mims-backend-x0i3.onrender.com/business-profile/${user.email}`)
+        fetch(`http://localhost:3001/business-profile/${user.email}`)
             .then((res) => res.json())
             .then((data) => {
                 if (data.status === "success" && data.profile && data.profile.businessName) {
                     setBusinessName(data.profile.businessName);
+                    if (data.profile.businessCategory) {
+                        setBusinessCategory(data.profile.businessCategory);
+                        localStorage.setItem("businessCategory", data.profile.businessCategory);
+                    }
                 } else {
                     setBusinessName("");
+                    setBusinessCategory("");
                 }
             })
-            .catch(() => setBusinessName(""));
+            .catch(() => {
+                setBusinessName("");
+                setBusinessCategory("");
+            });
+        // Also check localStorage in case user just saved
+        const cat = localStorage.getItem("businessCategory");
+        if (cat) setBusinessCategory(cat);
     }, [user]);
 
     const handleNavToggle = () => {
         setIsNavOpen(!isNavOpen);
     };
+
+    // Custom sidebar for Share Market Trade Management
+    const ShareMarketSidebar = (
+        <ul className="w-full flex-1">
+            <h1 className="text-xl p-1 mb-1 text-white font-semibold">
+                <img src="https://i.ibb.co/MkqjQ2cG/logo.png" />
+            </h1>
+            <hr className="mb-3 p-2" />
+            <li className="w-full">
+                <Link to="/home" className={`p-2 flex items-center rounded-lg text-lg mb-2 font-semibold transition-colors duration-300 ${location.pathname === "/home" ? "bg-[#5990d7] text-white dark:bg-blue-900 dark:text-white" : "hover:bg-blue-300 hover:text-white dark:hover:bg-blue-900"}`} onClick={() => setIsNavOpen(false)}>
+                    <p className="flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 w-full">
+                        <span className="text-2xl text-white"><MdDashboard /></span>
+                        <span className="text-xl text-white">Dashboard</span>
+                    </p>
+                </Link>
+            </li>
+            <li className="w-full">
+                <Link to="/new-entry" className={`p-2 flex items-center rounded-lg text-lg mb-2 font-semibold transition-colors duration-300 ${location.pathname === "/home" ? "bg-[#5990d7] text-white dark:bg-blue-900 dark:text-white" : "hover:bg-blue-300 hover:text-white dark:hover:bg-blue-900"}`} onClick={() => setIsNavOpen(false)}>
+                    <p className="flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 w-full">
+                        <span className="text-2xl text-white"><MdDashboard /></span>
+                        <span className="text-xl text-white">New Entry</span>
+                    </p>
+                </Link>
+            </li>
+
+              <li className="w-full">
+                <Link to="/my-trades" className={`p-2 flex items-center rounded-lg text-lg mb-2 font-semibold transition-colors duration-300 ${location.pathname === "/home" ? "bg-[#5990d7] text-white dark:bg-blue-900 dark:text-white" : "hover:bg-blue-300 hover:text-white dark:hover:bg-blue-900"}`} onClick={() => setIsNavOpen(false)}>
+                    <p className="flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 w-full">
+                        <span className="text-2xl text-white"><MdDashboard /></span>
+                        <span className="text-xl text-white">Trade History</span>
+                    </p>
+                </Link>
+            </li>
+
+          
+            {/* <li className="w-full">
+                <Link to="/portfolio" className={`p-2 flex items-center rounded-lg text-lg mb-2 font-semibold transition-colors duration-300 ${location.pathname === "/portfolio" ? "bg-[#5990d7] text-white dark:bg-blue-900 dark:text-white" : "hover:bg-blue-300 hover:text-white dark:hover:bg-blue-900"}`} onClick={() => setIsNavOpen(false)}>
+                    <p className="flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 w-full">
+                        <span className="text-2xl text-white"><MdInventory /></span>
+                        <span className="text-xl text-white">Portfolio</span>
+                    </p>
+                </Link>
+            </li>
+            <li className="w-full">
+                <Link to="/transactions" className={`p-2 flex items-center rounded-lg text-lg mb-2 font-semibold transition-colors duration-300 ${location.pathname === "/transactions" ? "bg-[#5990d7] text-white dark:bg-blue-900 dark:text-white" : "hover:bg-blue-300 hover:text-white dark:hover:bg-blue-900"}`} onClick={() => setIsNavOpen(false)}>
+                    <p className="flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 w-full">
+                        <span className="text-2xl text-white"><MdMoney /></span>
+                        <span className="text-xl text-white">Transactions</span>
+                    </p>
+                </Link>
+            </li>
+            <li className="w-full">
+                <Link to="/reports" className={`p-2 flex items-center rounded-lg text-lg mb-2 font-semibold transition-colors duration-300 ${location.pathname === "/reports" ? "bg-[#5990d7] text-white dark:bg-blue-900 dark:text-white" : "hover:bg-blue-300 hover:text-white dark:hover:bg-blue-900"}`} onClick={() => setIsNavOpen(false)}>
+                    <p className="flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 w-full">
+                        <span className="text-2xl text-white"><BiSolidReport /></span>
+                        <span className="text-xl text-white">Reports</span>
+                    </p>
+                </Link>
+            </li> */}
+            <li className="w-full">
+                <Link to="/settings" className={`p-2 flex items-center rounded-lg text-lg mb-2 font-semibold transition-colors duration-300 ${location.pathname === "/settings" ? "bg-[#5990d7] text-white dark:bg-blue-900 dark:text-white" : "hover:bg-blue-300 hover:text-white dark:hover:bg-blue-900"}`} onClick={() => setIsNavOpen(false)}>
+                    <p className="flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 w-full">
+                        <span className="text-2xl text-white"><MdOutlineSettings /></span>
+                        <span className="text-xl text-white">Settings</span>
+                    </p>
+                </Link>
+            </li>
+        </ul>
+    );
 
     return (
         <>
@@ -55,30 +136,35 @@ const AdminLayout = ({ children }) => {
                     </button>
 
                     <nav className="w-full flex flex-col h-full">
-                        <ul className="w-full flex-1">
-                            <h1 className="text-xl p-1 mb-1 text-white font-semibold">
-                                <img src="https://i.ibb.co/MkqjQ2cG/logo.png" />
-                            </h1>
+                        {/* Conditionally render sidebar */}
+                        {businessCategory === "Share Market Trade Management" ? (
+                            ShareMarketSidebar
+                        ) : (
+                            <ul className="w-full flex-1">
+                                <h1 className="text-xl p-1 mb-1 text-white font-semibold">
+                                    <img src="https://i.ibb.co/MkqjQ2cG/logo.png" />
+                                </h1>
 
-                            <hr className="mb-3 p-2" />
-                            {Nav_Links.map((item, index) => (
-                                <li key={index} className="w-full">
-                                    <Link
-                                        to={item.to}
-                                        className={`p-2 flex items-center rounded-lg text-lg 
-                                        mb-2 font-semibold transition-colors 
-                                        duration-300 ${location.pathname === item.to ?
-                                                "bg-[#5990d7] text-white dark:bg-blue-900 dark:text-white" : "hover:bg-blue-300 hover:text-white dark:hover:bg-blue-900"}`}
-                                        onClick={() => setIsNavOpen(false)}
-                                    >
-                                        <p className="flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 w-full">
-                                            <span className="text-2xl text-white">{item.icon}</span>
-                                            <span className="text-xl text-white">{item.label}</span>
-                                        </p>
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
+                                <hr className="mb-3 p-2" />
+                                {Nav_Links.map((item, index) => (
+                                    <li key={index} className="w-full">
+                                        <Link
+                                            to={item.to}
+                                            className={`p-2 flex items-center rounded-lg text-lg 
+                                            mb-2 font-semibold transition-colors 
+                                            duration-300 ${location.pathname === item.to ?
+                                                    "bg-[#5990d7] text-white dark:bg-blue-900 dark:text-white" : "hover:bg-blue-300 hover:text-white dark:hover:bg-blue-900"}`}
+                                            onClick={() => setIsNavOpen(false)}
+                                        >
+                                            <p className="flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 w-full">
+                                                <span className="text-2xl text-white">{item.icon}</span>
+                                                <span className="text-xl text-white">{item.label}</span>
+                                            </p>
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
 
                         <button
                             onClick={logout}

@@ -31,7 +31,7 @@ const Billing = () => {
 
   useEffect(() => {
     if (!user || !user.email) return;
-    fetch(`https://mims-backend-x0i3.onrender.com/business-profile/${user.email}`)
+    fetch(`http://localhost:3001/business-profile/${user.email}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.status === "success") {
@@ -42,7 +42,7 @@ const Billing = () => {
   }, [user]);
 
   useEffect(() => {
-    axios.get("https://mims-backend-x0i3.onrender.com/products")
+    axios.get("http://localhost:3001/products")
       .then((res) => setProducts(res.data))
       .catch((err) => console.error("Error fetching products:", err));
   }, []);
@@ -53,7 +53,7 @@ const Billing = () => {
   }, []);
 
   const fetchRecentBills = () => {
-    axios.get("https://mims-backend-x0i3.onrender.com/bills")
+    axios.get("http://localhost:3001/bills")
       .then((res) => {
         const sorted = res.data.sort((a, b) => new Date(b.billDate) - new Date(a.billDate));
         setRecentBills(sorted.slice(0, 4));
@@ -260,7 +260,7 @@ const Billing = () => {
   };
 
     try {
-      await axios.post("https://mims-backend-x0i3.onrender.com/save-bill", billData);
+      await axios.post("http://localhost:3001/save-bill", billData);
       toast.success("Bill Saved Successfully!");
       setCustomer({ name: "", mobile: "", email: "" });
       setOrder([]);
@@ -514,11 +514,8 @@ const Billing = () => {
           </div>
         )}
      
-
-
-     
         {(showPreview || selectedBill) && selectedBill && (
-          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+          <div className="fixed w-1/2 inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
             <div className="bg-white text-black p-4 rounded shadow-lg w-full max-w-[850px] max-h-[90vh] overflow-auto">
               <div ref={invoiceRef} className="p-4">
                 <style>{`  
@@ -610,7 +607,7 @@ const Billing = () => {
                       <div className="w-3/12 flex items-center">
                         <img
                           className="block m-auto -top-4 w-full h-full"
-                          src={businessProfile?.businessLogo ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessLogo}` : "https://i.ibb.co/ymp7B3FW/logo-main.png"}
+                          src={businessProfile?.businessLogo ? `http://localhost:3001${businessProfile.businessLogo}` : "Please upload your business logo"}
                           alt="Business Logo"
                         />
                       </div>
@@ -675,13 +672,13 @@ const Billing = () => {
 
                   <div className="footer flex flex-col md:flex-row justify-between mt-0 items-center">
                     <div className="text-left">
-                      <p>Thank you for shopping at  ''!</p>
+                      <p>Thank you for shopping at {businessProfile?.businessName || 'Business Name'}!</p>
                       <p>Terms: All sales are final. Contact us for warranty details.</p>
                     </div>
                     <div className="stamp">
                       <img
                         className="w-24 h-24 md:w-32 md:h-32 object-contain"
-                        src={businessProfile?.businessStamp ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessStamp}` : "https://iili.io/FVXKZCP.md.png"}
+                        src={businessProfile?.businessStamp ? `http://localhost:3001${businessProfile.businessStamp}` : "Please upload your business stamp"}
                         alt="Shop Stamp"
                       />
                     </div>

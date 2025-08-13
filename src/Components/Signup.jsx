@@ -14,7 +14,7 @@ const Signup = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     axios
-      .post(`https://mims-backend-x0i3.onrender.com/register`, { name, email, password })
+      .post(`http://localhost:3001/register`, { name, email, password })
       .then(() => navigate("/"))
       .catch((err) => console.error(err));
   };

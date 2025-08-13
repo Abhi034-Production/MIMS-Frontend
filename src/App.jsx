@@ -10,8 +10,8 @@ import ThemeProvider from "./Context/ThemeContext";
 import PrivateRoute from "./Components/PrivateRoute";
 import BusinessProfile from './Pages/BusinessProfile'
 import BusinessDetail from './Pages/BusinessDetail'
-
-
+import NewEntry from './Category/NewEntry'
+import MyTrades from './Category/MyTrades'
 
 
 const AdminDashboard = lazy(() => import('./Pages/AdminDashboard'))
@@ -42,6 +42,9 @@ function App() {
                 <Route path='business-profile' element={<BusinessProfile />} />
                 <Route path='business-detail' element={<BusinessDetail />} />
                 <Route path='/loading' element={<Loading />} />
+                {/* Dynamic Entry Management */}
+                <Route path='new-entry' element={<NewEntry />} />
+                <Route path='my-trades' element={<MyTrades />} />
               </Route>
               <Route path='*' element={<NotFound />} />
             </Routes>

@@ -17,6 +17,21 @@ const categories = [
   "Wholesale Shop",
   "Service",
   "Agriculture Shop",
+  "Share Market Trade Management",
+  "Manufacturing",
+  "Transport",
+  "Food and Beverage",
+  "Healthcare",
+  "Education",
+  "Real Estate",
+  "IT Services",
+  "Finance",
+  "Consulting",
+  "Entertainment",
+  "Travel and Tourism",
+  "Construction",
+  "Automotive",
+  "Logistics",
   "Other",
 ];
 
@@ -52,13 +67,13 @@ const BusinessProfile = () => {
     Object.entries(form).forEach(([key, value]) => {
       formData.append(key, value);
     });
-    formData.append("userEmail", user.email); // Required for backend
+    formData.append("userEmail", user.email);
 
     try {
       setLoading(true);
       setMessage("");
 
-      const response = await fetch("https://mims-backend-x0i3.onrender.com/business-profile", {
+      const response = await fetch("http://localhost:3001/business-profile", {
         method: "POST",
         body: formData,
       });
@@ -66,10 +81,14 @@ const BusinessProfile = () => {
       const result = await response.json();
       setLoading(false);
 
-      console.log("Response from backend:", result);
+      // console.log("Response from backend:", result);
 
       if (result.status === "success") {
         setMessage("✅ Business profile saved successfully!");
+        // Store the selected business category in localStorage
+        if (form.businessCategory) {
+          localStorage.setItem("businessCategory", form.businessCategory);
+        }
         setForm(initialState);
         setLogoPreview(null);
         setStampPreview(null);
@@ -79,7 +98,7 @@ const BusinessProfile = () => {
       }
     } catch (error) {
       setLoading(false);
-      console.error("Error submitting business profile:", error);
+      // console.error("Error submitting business profile:", error);
       setMessage("❌ Failed to connect to server.");
     }
   };

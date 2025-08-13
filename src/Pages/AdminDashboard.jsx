@@ -32,7 +32,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     if (!user || !user.email) return;
-    fetch(`https://mims-backend-x0i3.onrender.com/business-profile/${user.email}`)
+    fetch(`http://localhost:3001/business-profile/${user.email}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.status === "success") {
@@ -45,7 +45,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (!businessProfile || !businessProfile.businessEmail) return;
 
-    axios.get(`https://mims-backend-x0i3.onrender.com/bills?businessEmail=${encodeURIComponent(businessProfile.businessEmail)}`)
+    axios.get(`http://localhost:3001/bills?businessEmail=${encodeURIComponent(businessProfile.businessEmail)}`)
       .then((response) => {
         const bills = response.data;
         const now = new Date();
@@ -102,7 +102,7 @@ const AdminDashboard = () => {
       })
       .catch((error) => console.error("Error fetching data:", error));
 
-    axios.get(`https://mims-backend-x0i3.onrender.com/products?email=${encodeURIComponent(businessProfile.businessEmail)}`)
+    axios.get(`http://localhost:3001/products?email=${encodeURIComponent(businessProfile.businessEmail)}`)
       .then((response) => {
         const lowStockProducts = response.data.filter(
           (product) => product.quantity !== undefined && product.quantity < 5
