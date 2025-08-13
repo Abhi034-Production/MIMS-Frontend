@@ -19,7 +19,7 @@ const Inventory = () => {
 
   useEffect(() => {
     if (!businessEmail) return;
-    axios.get(`http://localhost:3001/products?email=${encodeURIComponent(businessEmail)}`)
+    axios.get(`https://mims-backend-x0i3.onrender.com/products?email=${encodeURIComponent(businessEmail)}`)
       .then((response) => setProducts(response.data))
       .catch((error) => console.error("Error fetching products:", error));
   }, [businessEmail]);
@@ -27,7 +27,7 @@ const Inventory = () => {
   // Fetch business email from BusinessDetails
   useEffect(() => {
     if (user && user.email) {
-      fetch(`http://localhost:3001/business-profile/${user.email}`)
+      fetch(`https://mims-backend-x0i3.onrender.com/business-profile/${user.email}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.status === "success" && data.profile && data.profile.businessEmail) {
@@ -42,7 +42,7 @@ const Inventory = () => {
     e.preventDefault();
     if (newProduct.name && newProduct.quantity && newProduct.price && businessEmail) {
       const productToSend = { ...newProduct, email: businessEmail };
-      axios.post(`http://localhost:3001/add-product`, productToSend)
+      axios.post(`https://mims-backend-x0i3.onrender.com/add-product`, productToSend)
         .then((response) => {
           setProducts([...products, response.data]);
           setNewProduct({ name: "", quantity: "", price: "", email: businessEmail });
@@ -55,7 +55,7 @@ const Inventory = () => {
   };
 
   const deleteProduct = (id) => {
-    axios.delete(`http://localhost:3001/delete-product/${id}`)
+    axios.delete(`https://mims-backend-x0i3.onrender.com/delete-product/${id}`)
       .then(() => {
         setProducts(products.filter((product) => product._id !== id));
       })
@@ -71,7 +71,7 @@ const Inventory = () => {
     e.preventDefault();
     if (editingProduct.name && editingProduct.quantity && editingProduct.price && businessEmail) {
       const productToSend = { ...editingProduct, email: businessEmail };
-      axios.put(`http://localhost:3001/update-product/${editingProduct._id}`, productToSend)
+      axios.put(`https://mims-backend-x0i3.onrender.com/update-product/${editingProduct._id}`, productToSend)
         .then((response) => {
           setProducts(products.map((product) =>
             product._id === editingProduct._id ? response.data : product

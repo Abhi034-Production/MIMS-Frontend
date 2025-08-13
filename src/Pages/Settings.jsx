@@ -29,7 +29,7 @@ const Settings = () => {
     e.preventDefault();
 
     try {
-      const res = await axios.put(`http://localhost:3001/update-admin`, {
+      const res = await axios.put(`https://mims-backend-x0i3.onrender.com/update-admin`, {
         email: user.email,
         name,
         password: newPassword,

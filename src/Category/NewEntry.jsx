@@ -62,7 +62,7 @@ const NewEntry = () => {
         tradeRecords,
         userEmail: user?.email || ""
       };
-      const res = await axios.post("http://localhost:3001/intraday-new-entry", payload);
+      const res = await axios.post("https://mims-backend-x0i3.onrender.com/intraday-new-entry", payload);
       toast.success(res.data.message || "Entry saved successfully!");
     } catch (err) {
       toast.error(err.response?.data?.error || "Error saving entry.");

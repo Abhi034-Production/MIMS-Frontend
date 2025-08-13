@@ -51,14 +51,14 @@
 //       return;
 //     }
 
-//     axios.get(`http://localhost:3001/business-profile/${userEmail}`)
+//     axios.get(`https://mims-backend-x0i3.onrender.com/business-profile/${userEmail}`)
 //       .then(({ data }) => {
 //         let businessEmail = data?.profile?.businessEmail;
 //         // If no businessEmail, fallback to all bills
 //         if (!businessEmail) {
-//           return axios.get(`http://localhost:3001/bills`).then(({ data }) => ({ bills: data, businessEmail: null }));
+//           return axios.get(`https://mims-backend-x0i3.onrender.com/bills`).then(({ data }) => ({ bills: data, businessEmail: null }));
 //         }
-//         return axios.get(`http://localhost:3001/bills?businessEmail=${encodeURIComponent(businessEmail)}`)
+//         return axios.get(`https://mims-backend-x0i3.onrender.com/bills?businessEmail=${encodeURIComponent(businessEmail)}`)
 //           .then(({ data }) => ({ bills: data, businessEmail }));
 //       })
 //       .then(({ bills, businessEmail }) => {
@@ -115,9 +115,9 @@
 
 //         //  low stock products fetch
 //         if (businessEmail) {
-//           return axios.get(`http://localhost:3001/products?email=${encodeURIComponent(businessEmail)}`);
+//           return axios.get(`https://mims-backend-x0i3.onrender.com/products?email=${encodeURIComponent(businessEmail)}`);
 //         } else {
-//           return axios.get(`http://localhost:3001/products`);
+//           return axios.get(`https://mims-backend-x0i3.onrender.com/products`);
 //         }
 //       })
 //       .then(({ data: products }) => {

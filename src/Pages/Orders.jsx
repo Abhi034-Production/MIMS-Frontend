@@ -24,7 +24,7 @@ const Orders = () => {
 
   useEffect(() => {
     if (!user || !user.email) return;
-    fetch(`http://localhost:3001/business-profile/${user.email}`)
+    fetch(`https://mims-backend-x0i3.onrender.com/business-profile/${user.email}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.status === "success") {
@@ -35,7 +35,7 @@ const Orders = () => {
   }, [user]);
 
 useEffect(() => {
-  axios.get(`http://localhost:3001/bills`)
+  axios.get(`https://mims-backend-x0i3.onrender.com/bills`)
     .then((res) => {
       const sorted = res.data.sort((a, b) => new Date(b.billDate) - new Date(a.billDate));
       if (businessProfile && businessProfile.businessEmail) {
@@ -63,10 +63,10 @@ useEffect(() => {
     setImagesLoaded(false);
     
     const logo = new Image();
-    logo.src = businessProfile?.businessLogo ? `http://localhost:3001${businessProfile.businessLogo}` : "Please upload a logo";
+    logo.src = businessProfile?.businessLogo ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessLogo}` : "Please upload a logo";
 
     const stamp = new Image();
-    stamp.src = businessProfile?.businessStamp ? `http://localhost:3001${businessProfile.businessStamp}` : "Please upload a stamp";
+    stamp.src = businessProfile?.businessStamp ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessStamp}` : "Please upload a stamp";
     
     Promise.all([
       new Promise(resolve => { logo.onload = resolve; }),
@@ -228,7 +228,7 @@ useEffect(() => {
                       <div className="w-3/12 flex items-center">
                         <img
                           className="block m-auto -top-4 w-full h-full"
-                          src={businessProfile?.businessLogo ? `http://localhost:3001${businessProfile.businessLogo}` : "Please upload a logo"}
+                          src={businessProfile?.businessLogo ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessLogo}` : "Please upload a logo"}
                           alt="Business Logo"
                         />
                       </div>
@@ -294,7 +294,7 @@ useEffect(() => {
                     <div className="text-center mt-5">
                       <img
                         className="w-24 h-24 md:w-32 md:h-32 object-contain max-w-[120px] my-[10px]"
-                        src={businessProfile?.businessStamp ? `http://localhost:3001${businessProfile.businessStamp}` : "Please upload a stamp"}
+                        src={businessProfile?.businessStamp ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessStamp}` : "Please upload a stamp"}
                         alt="Shop Stamp"
                       />
                     </div>

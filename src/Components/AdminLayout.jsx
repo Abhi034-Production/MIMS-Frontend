@@ -23,7 +23,7 @@ const AdminLayout = ({ children }) => {
 
     useEffect(() => {
         if (!user || !user.email) return;
-        fetch(`http://localhost:3001/business-profile/${user.email}`)
+        fetch(`https://mims-backend-x0i3.onrender.com/business-profile/${user.email}`)
             .then((res) => res.json())
             .then((data) => {
                 if (data.status === "success" && data.profile && data.profile.businessName) {
