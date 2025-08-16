@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useContext } from "react";
-import { AuthContext } from "../Context/AuthContext";
-import AdminLayout from "../Components/AdminLayout";
+import { AuthContext } from "../../Context/AuthContext";
+import AdminLayout from "../../Components/AdminLayout";
 import axios from "axios";
 import { ToastContainer, toast } from 'react-toastify';
 import { Link } from "react-router-dom";
 import { MdOutlineHome } from 'react-icons/md';
-import  Spinner from "../Components/Spinner"; 
+import  Spinner from "../../Components/Spinner"; 
 
 
 const NewEntry = () => {

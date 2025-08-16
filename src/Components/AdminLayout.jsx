@@ -57,11 +57,11 @@ const AdminLayout = ({ children }) => {
                 <img src="https://i.ibb.co/MkqjQ2cG/logo.png" />
             </h1>
             <hr className="mb-3 p-2" />
-            <li className="w-full">
-                <Link to="/home" className={`p-2 flex items-center rounded-lg text-lg mb-2 font-semibold transition-colors duration-300 ${location.pathname === "/home" ? "bg-[#5990d7] text-white dark:bg-blue-900 dark:text-white" : "hover:bg-blue-300 hover:text-white dark:hover:bg-blue-900"}`} onClick={() => setIsNavOpen(false)}>
+            <li className="w-full ">
+                <Link to="/portfolio" className={`p-2 flex items-center rounded-lg text-lg mb-2 font-semibold transition-colors duration-300 ${location.pathname === "/home" ? "bg-[#5990d7] text-white dark:bg-blue-900 dark:text-white" : "hover:bg-blue-300 hover:text-white dark:hover:bg-blue-900"}`} onClick={() => setIsNavOpen(false)}>
                     <p className="flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 w-full">
                         <span className="text-2xl text-white"><MdDashboard /></span>
-                        <span className="text-xl text-white">Dashboard</span>
+                        <span className="text-xl text-white">Portfolio</span>
                     </p>
                 </Link>
             </li>
