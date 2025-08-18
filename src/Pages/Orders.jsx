@@ -8,6 +8,48 @@ import { Link } from "react-router-dom";
 import { MdFileDownload, MdSearch, MdOutlineHome } from "react-icons/md";
 
 const Orders = () => {
+  const shareInvoiceOnWhatsApp = async () => {
+    const buttons = document.querySelector("#invoice-actions");
+    if (buttons) buttons.style.display = "none";
+    try {
+      const canvas = await html2canvas(invoiceRef.current, {
+        scale: 1.5,
+        quality: 0.8,
+        logging: false,
+        useCORS: true,
+        backgroundColor: "#FFFFFF"
+      });
+      const imgData = canvas.toDataURL("image/jpeg", 0.8);
+      const pdf = new jsPDF("p", "mm", "a5");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
+      pdf.addImage(imgData, "JPEG", 0, 0, pageWidth, pdfHeight);
+      const pdfBlob = pdf.output("blob");
+      const formData = new FormData();
+      formData.append("file", pdfBlob, `invoice_${selectedBill._id}.pdf`);
+      const uploadResponse = await fetch("https://tmpfiles.org/api/v1/upload", {
+        method: "POST",
+        body: formData
+      });
+      const uploadData = await uploadResponse.json();
+      if (!uploadData?.data?.url) {
+        throw new Error("Failed to upload PDF");
+      }
+      const pdfUrl = uploadData.data.url.replace("tmpfiles.org/", "tmpfiles.org/dl/");
+      const name = selectedBill?.customer?.name || "Customer";
+      let mobile = selectedBill?.customer?.mobile || "";
+      mobile = mobile.replace(/\D/g, "");
+      if (!mobile.startsWith("91")) mobile = "91" + mobile;
+      const message = `Hello ${name},\n\nHere is your invoice from ${businessProfile?.businessName || 'Our Shop'}:\n${pdfUrl}\n\nThank you for your business!`;
+      const whatsappLink = `https://wa.me/${mobile}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappLink, "_blank");
+    } catch (err) {
+      alert("Error sharing invoice. Please try downloading and sharing manually.");
+    } finally {
+      if (buttons) buttons.style.display = "flex";
+    }
+  };
   const [bills, setBills] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredBills, setFilteredBills] = useState([]);
@@ -124,8 +166,7 @@ useEffect(() => {
 
   return (
     <AdminLayout>
-      <div className="p-6 min-h-screen bg-gray-50 dark:bg-gray-900 dark:text-white transition-colors">
-        <div className="text-sm text-gray-600 mb-4 dark:text-white">
+       <div className="text-sm text-gray-600 mb-4 dark:text-white">
           <nav className="flex items-center space-x-2">
             <Link to="/home"><MdOutlineHome fontSize={20} /></Link>
             <span className="text-gray-400 dark:text-white">/</span>
@@ -133,6 +174,7 @@ useEffect(() => {
           </nav>
         </div>
 
+      <div className="p-6 min-h-screen bg-gray-50 dark:bg-gray-900 dark:text-white transition-colors">
         <div className="flex flex-col sm:flex-row justify-end items-center gap-4">
           <input
             type="search"
@@ -309,7 +351,12 @@ useEffect(() => {
                 >
                   Download PDF
                 </button>
-              
+                <button
+                  onClick={shareInvoiceOnWhatsApp}
+                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                >
+                  Share via WhatsApp
+                </button>
                 <button
                   onClick={closeModal}
                   className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"

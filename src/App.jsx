@@ -13,6 +13,7 @@ import BusinessDetail from './Pages/BusinessDetail'
 import NewEntry from './Category/Share_Market/NewEntry';
 import MyTrades from './Category/Share_Market/MyTrades'
 import Portfolio from './Category/Share_Market/Portfolio'
+import AdminLayout from './Components/AdminLayout'
 
 
 const AdminDashboard = lazy(() => import('./Pages/AdminDashboard'))
@@ -34,6 +35,7 @@ function App() {
               <Route path="/signup" element={<Signup />} />
               {/* Protected Routes */}
               <Route element={<PrivateRoute />}>  
+                <Route path="/main" element={<AdminLayout />} />
                 <Route path="/home" element={<AdminDashboard />} />
                 <Route path='inventory' element={<Inventory />} />
                 <Route path='billing' element={<Billing />} />

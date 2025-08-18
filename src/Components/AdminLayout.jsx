@@ -41,7 +41,7 @@ const AdminLayout = ({ children }) => {
                 setBusinessName("");
                 setBusinessCategory("");
             });
-        // Also check localStorage in case user just saved
+     
         const cat = localStorage.getItem("businessCategory");
         if (cat) setBusinessCategory(cat);
     }, [user]);
@@ -124,7 +124,7 @@ const AdminLayout = ({ children }) => {
             <div className="dark:text-white flex min-h-screen h-screen overflow-hidden bg-gray-100 dark:bg-gray-900 transition-colors">
                 {/* Sidebar */}
                 <aside
-                    className={`bg-gray-600 dark:text-white dark:bg-gray-800 p-5 text-white fixed md:relative h-screen 
+                    className={`bg-gray-800 dark:text-white dark:bg-gray-800 p-5 text-white fixed md:relative h-screen 
                 flex flex-col items-center md:items-start w-64 transition-transform duration-300
                 ${isNavOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"} z-10`}
                 >

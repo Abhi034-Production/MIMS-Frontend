@@ -5,6 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { AuthContext } from "../Context/AuthContext";
+import Spinner from "./Spinner";
 
 
 const Login = () => {
@@ -16,6 +17,7 @@ const Login = () => {
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [useOtp, setUseOtp] = useState(false); 
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -23,15 +25,13 @@ const Login = () => {
       toast.warning("Please fill in all fields!");
       return;
     }
-
+    setLoading(true);
     try {
       if (useOtp) {
-        // OTP login flow
         const res = await axios.post(`https://mims-backend-x0i3.onrender.com/login-with-otp`, {
           email,
           password,
         });
-
         if (res.data.status === "otp-sent") {
           toast.success("OTP sent to your email");
           setStep(2);
@@ -39,15 +39,11 @@ const Login = () => {
           toast.error("Invalid email or password");
         }
       } else {
-        // Non-OTP login flow
         const res = await axios.post(`https://mims-backend-x0i3.onrender.com/login`, {
           email,
           password,
         });
-
-        // Support both string and object response from backend
-        if (res.data === "success" || (res.data && res.data.status === "success")) {
-          // If backend returns user name, use it; else fallback to get-user
+         if (res.data === "success" || (res.data && res.data.status === "success")) {
           let userName = res.data && res.data.name;
           if (!userName) {
             try {
@@ -59,7 +55,6 @@ const Login = () => {
           }
           login({ email, name: userName });
           toast.success("Login successful");
-          // Check if business profile exists (same as password login)
           const checkProfile = await axios.get(`https://mims-backend-x0i3.onrender.com/business-profile/${email}`, {
             validateStatus: (status) => status === 200 || status === 404
           });
@@ -77,10 +72,11 @@ const Login = () => {
         err.response?.data?.message || 
         "Login failed. Please try again."
       );
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Existing verifyOtp function
   const verifyOtp = async () => {
     if (!otp) {
       toast.warning("Please enter OTP!");
@@ -95,28 +91,33 @@ const Login = () => {
 
       if (res.data.status === "success") {
         login({ email, name: res.data.name });
-        toast.success("Login successful");
-        // Check if business profile exists (same as password login)
+        // toast.success("Login successful");
         const checkProfile = await axios.get(`https://mims-backend-x0i3.onrender.com/business-profile/${email}`, {
           validateStatus: (status) => status === 200 || status === 404
         });
         if (checkProfile.status === 200 && checkProfile.data.status === "success") {
           navigate("/home");
         } else {
-          // Suppress 404 error in console for new users
-          // (no error will be thrown, so nothing in console)
           navigate("/business-profile");
         }
       } else {
-        toast.error(res.data.message || "OTP verification failed");
+        alert("OTP verification failed");
+        // toast.error(res.data.message || "OTP verification failed");
       }
     } catch (err) {
-      toast.error("OTP verification failed");
+     // toast.error("OTP verification failed");
+     alert("OTP verification failed");
     }
   };
 
   return (
-    <div className="h-screen flex items-center justify-center bg-gradient-to-br from-green-200 via-blue-100 to-purple-200 px-4">
+    <div className="h-screen flex items-center justify-center bg-gradient-to-br from-green-200 via-blue-100 to-purple-200 px-4 relative">
+      {/* Moving Circle Animation */}
+      {loading && (
+        <div className="absolute top-1/2 left-1/2 z-50" style={{ transform: 'translate(-50%, -50%)' }}>
+        <Spinner />
+        </div>
+      )}
       <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-2xl border border-gray-300">
         <h1 className="text-center text-3xl sm:text-4xl font-extrabold text-gray-800 mb-6">
           Login
@@ -177,11 +178,16 @@ const Login = () => {
               </div>
             </div>
 
-            <button
+            <button id="login-button"
               type="submit"
-              className="w-full h-12 bg-blue-600 hover:scale-105 text-white rounded-lg hover:bg-blue-700 transition"
+              className={`w-full h-12 bg-blue-600 hover:scale-105 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center relative ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+              disabled={loading}
             >
-              {useOtp ? "Send OTP" : "Login"}
+              {loading ? (
+                <span className="mr-2">Logging in</span>
+              ) : (
+                useOtp ? "Send OTP" : "Login"
+              )}
             </button>
           </form>
         ) : (

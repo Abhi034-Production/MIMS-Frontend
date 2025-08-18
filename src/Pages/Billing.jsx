@@ -25,6 +25,7 @@ const Billing = () => {
   const [editPriceMode, setEditPriceMode] = useState(false);
   const [tempPrices, setTempPrices] = useState({});
   const invoiceRef = useRef(null);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
   const { user } = useContext(AuthContext);
   const [businessProfile, setBusinessProfile] = useState(null);
 
@@ -121,6 +122,17 @@ const Billing = () => {
 
   const handleDownloadInvoice = (bill) => {
     setSelectedBill(bill);
+    setImagesLoaded(false);
+    const logo = new window.Image();
+    logo.src = businessProfile?.businessLogo ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessLogo}` : "";
+    const stamp = new window.Image();
+    stamp.src = businessProfile?.businessStamp ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessStamp}` : "";
+    Promise.all([
+      new Promise(resolve => { logo.onload = resolve; }),
+      new Promise(resolve => { stamp.onload = resolve; })
+    ]).then(() => {
+      setImagesLoaded(true);
+    });
   };
 
   const closeModal = () => {
@@ -172,7 +184,7 @@ const Billing = () => {
       mobile = mobile.replace(/\D/g, "");
       if (!mobile.startsWith("91")) mobile = "91" + mobile;
 
-      const message = `Hello ${name},\n\nHere is your invoice from Sai Mobile Shop:\n${pdfUrl}\n\nThank you for your business!`;
+      const message = `Hello ${name},\n\nHere is your invoice from Shop:\n${pdfUrl}\n\nThank you!`;
       const whatsappLink = `https://wa.me/${mobile}?text=${encodeURIComponent(message)}`;
 
       window.open(whatsappLink, "_blank");
@@ -188,24 +200,26 @@ const Billing = () => {
   };
 
   const downloadInvoiceAsPDF = () => {
+    if (!imagesLoaded) {
+      toast.error("Images are still loading. Please try again in a moment.");
+      return;
+    }
     const buttons = document.querySelector("#invoice-actions");
     if (buttons) buttons.style.display = "none";
-
     setTimeout(async () => {
       try {
         const canvas = await html2canvas(invoiceRef.current, {
           scale: 1.5,
           quality: 0.8,
-          logging: false
+          logging: false,
+          useCORS: true,
+          backgroundColor: "#FFFFFF"
         });
-
         const imgData = canvas.toDataURL("image/jpeg", 0.8);
-        // Use A5 size for PDF
         const pdf = new jsPDF("p", "mm", "a5");
         const pageWidth = pdf.internal.pageSize.getWidth();
         const imgProps = pdf.getImageProperties(imgData);
         const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
-
         pdf.addImage(imgData, "JPEG", 0, 0, pageWidth, pdfHeight);
         pdf.save(`invoice_${selectedBill._id}.pdf`);
       } catch (error) {
@@ -214,12 +228,11 @@ const Billing = () => {
         if (buttons) buttons.style.display = "flex";
       }
     }, 200);
-
   };
 
   const generateAndSharePDF = async () => {
-    if (!customer.name || !/^91\d{10}$/.test(customer.mobile)) {
-      toast.error("Please enter valid name and 10-digit mobile number with '91' prefix.");
+    if (!customer.name || !/^\d{10}$/.test(customer.mobile)) {
+      toast.error("Please enter valid name and 10-digit mobile number.");
       return;
     }
 
@@ -262,7 +275,7 @@ const Billing = () => {
     try {
       await axios.post("https://mims-backend-x0i3.onrender.com/save-bill", billData);
       toast.success("Bill Saved Successfully!");
-      setCustomer({ name: "", mobile: "", email: "" });
+      setCustomer({ name: "", mobile: "91", email: "" });
       setOrder([]);
       setTotal(0);
       fetchRecentBills();
@@ -332,7 +345,6 @@ const Billing = () => {
                     </option>
                   ))}
               </select>
-              {/* Hidden input for business email */}
              </div>
             {/* Quantity */}
             <div className="w-full md:w-40">
@@ -600,7 +612,7 @@ const Billing = () => {
                   <div className="header">
                     <div className="flex flex-row-reverse w-full p-2">
                       <div className="w-9/12">
-                        <h1 className="text-10xl font-extrabold text-center">
+                        <h1 className="text-10xl font-extrabold text-center ">
                           {businessProfile?.businessName || 'Business Name'}
                         </h1>
                       </div>

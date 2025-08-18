@@ -72,63 +72,153 @@ const MyTrades = () => {
 			<div className="max-w-4xl mx-auto p-4">
 				<h2 className="text-2xl font-bold mb-4">My Intraday Entries</h2>
 				{message && <div className="mb-4 text-green-600">{message}</div>}
-				{entries.length === 0 ? (
-					<div className="text-center text-gray-500">No entries found.</div>
-				) : (
-					<table className="w-full text-center text-[10px] xs:text-xs sm:text-sm md:text-base table-fixed break-words">
-						<thead className="bg-gray-100 dark:bg-gray-700">
-							<tr>
-								<th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Date</th>
-								<th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Day</th>
-								<th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Profit/Loss</th>
-								<th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Net P/L</th>
-								<th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Gov Charges</th>
-								<th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Brokarage</th>
-								<th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Total Trade</th>
-								<th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Trade Type</th>
-								<th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Indicators</th>
-								<th className="px-1 py-2 sm:px-2 dark:text-white whitespace-normal">Actions</th>
-							</tr>
-						</thead>
-						<tbody>
-							{entries.map(entry => (
-								editId === entry._id ? (
-									<tr key={entry._id} className="bg-yellow-50 text-center border-b">
-										<td className="py-1 px-1 sm:px-2 whitespace-normal break-words"><input name="date" value={editData.date} onChange={handleEditChange} className="border px-1" /></td>
-										<td className="py-1 px-1 sm:px-2 whitespace-normal break-words"><input name="day" value={editData.day} onChange={handleEditChange} className="border px-1" /></td>
-										<td className="py-1 px-1 sm:px-2 whitespace-normal break-words"><input name="overallProfitLoss" value={editData.overallProfitLoss} onChange={handleEditChange} className="border px-1" /></td>
-										<td className="py-1 px-1 sm:px-2 whitespace-normal break-words"><input name="netProfitLoss" value={editData.netProfitLoss} onChange={handleEditChange} className="border px-1" /></td>
-										<td className="py-1 px-1 sm:px-2 whitespace-normal break-words"><input name="govCharges" value={editData.govCharges} onChange={handleEditChange} className="border px-1" /></td>
-										<td className="py-1 px-1 sm:px-2 whitespace-normal break-words"><input name="brokarage" value={editData.brokarage} onChange={handleEditChange} className="border px-1" /></td>
-										<td className="py-1 px-1 sm:px-2 whitespace-normal break-words"><input name="totalTrade" value={editData.totalTrade} onChange={handleEditChange} className="border px-1" /></td>
-										<td className="py-1 px-1 sm:px-2 whitespace-normal break-words"><input name="tradeType" value={editData.tradeType} onChange={handleEditChange} className="border px-1" /></td>
-										<td className="py-1 px-1 sm:px-2 whitespace-normal break-words"><input name="tradeIndicators" value={editData.tradeIndicators} onChange={handleEditChange} className="border px-1" /></td>
-										<td className="py-1 px-1 sm:px-2 whitespace-normal break-words">
-											<button onClick={handleEditSave} className="bg-green-500 text-white px-2 py-1 rounded mr-2">Save</button>
-											<button onClick={() => setEditId(null)} className="bg-gray-400 text-white px-2 py-1 rounded">Cancel</button>
-										</td>
-									</tr>
-								) : (
-									<tr key={entry._id} className="text-center border-b">
-										<td className="py-1 px-1 sm:px-2 whitespace-normal break-words">{entry.date}</td>
-										<td className="py-1 px-1 sm:px-2 whitespace-normal break-words">{entry.day}</td>
-										<td className="py-1 px-1 sm:px-2 whitespace-normal break-words">{entry.overallProfitLoss}</td>
-										<td className="py-1 px-1 sm:px-2 whitespace-normal break-words">{entry.netProfitLoss}</td>
-										<td className="py-1 px-1 sm:px-2 whitespace-normal break-words">{entry.govCharges}</td>
-										<td className="py-1 px-1 sm:px-2 whitespace-normal break-words">{entry.brokarage}</td>
-										<td className="py-1 px-1 sm:px-2 whitespace-normal break-words">{entry.totalTrade}</td>
-										<td className="py-1 px-1 sm:px-2 whitespace-normal break-words">{entry.tradeType}</td>
-										<td className="py-1 px-1 sm:px-2 whitespace-normal break-words">{entry.tradeIndicators}</td>
-										<td className="py-1 px-1 sm:px-2 whitespace-normal break-words">
-											<button onClick={() => handleEdit(entry)} className="bg-blue-500 text-white px-2 py-1 rounded mr-2">Edit</button>
-											<button onClick={() => handleDelete(entry._id)} className="bg-red-500 text-white px-2 py-1 rounded">Delete</button>
-										</td>
-									</tr>
-								)
-							))}
-						</tbody>
-					</table>
-				)}
+						{entries.length === 0 ? (
+							<div className="text-center text-gray-500">No entries found.</div>
+						) : (
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+								{entries.map(entry => (
+									<div key={entry._id} className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 mb-4 border border-gray-200 dark:border-gray-700">
+														{editId === entry._id ? (
+															<form onSubmit={handleEditSave} className="space-y-2">
+																<div className="grid grid-cols-2 gap-2">
+																	<input name="date" value={editData.date} onChange={handleEditChange} className="border px-2 py-1 rounded" placeholder="Date" />
+																	<input name="day" value={editData.day} onChange={handleEditChange} className="border px-2 py-1 rounded" placeholder="Day" />
+																	<input name="overallProfitLoss" value={editData.overallProfitLoss} onChange={handleEditChange} className="border px-2 py-1 rounded" placeholder="Overall Profit/Loss" />
+																	<input name="netProfitLoss" value={editData.netProfitLoss} onChange={handleEditChange} className="border px-2 py-1 rounded" placeholder="Net Profit/Loss" />
+																	<input name="govCharges" value={editData.govCharges} onChange={handleEditChange} className="border px-2 py-1 rounded" placeholder="Gov Charges" />
+																	<input name="brokarage" value={editData.brokarage} onChange={handleEditChange} className="border px-2 py-1 rounded" placeholder="Brokarage" />
+																	<input name="totalTrade" value={editData.totalTrade} onChange={handleEditChange} className="border px-2 py-1 rounded" placeholder="Total Trade" />
+																	<input name="tradeType" value={editData.tradeType} onChange={handleEditChange} className="border px-2 py-1 rounded" placeholder="Trade Type" />
+																	<input name="tradeIndicators" value={editData.tradeIndicators} onChange={handleEditChange} className="border px-2 py-1 rounded" placeholder="Indicators" />
+																</div>
+																{/* Editable trade records */}
+																{editData.tradeRecords && editData.tradeRecords.length > 0 && (
+																	<div className="mt-4">
+																		<div className="font-semibold mb-2 text-gray-700 dark:text-gray-200">Edit Trade Records:</div>
+																		<div className="overflow-x-auto">
+																			<table className="min-w-full text-xs border border-gray-200 dark:border-gray-700 rounded">
+																				<thead className="bg-gray-100 dark:bg-gray-700">
+																					<tr>
+																						<th className="px-2 py-2">Type</th>
+																						<th className="px-2 py-2">Stock Name</th>
+																						<th className="px-2 py-2">Qty</th>
+																						<th className="px-2 py-2">Profit/Loss</th>
+																					</tr>
+																				</thead>
+																				<tbody>
+																					{editData.tradeRecords.map((record, idx) => (
+																						<tr key={idx} className="border-t">
+																							<td className="px-2 py-1">
+																								<input
+																									type="text"
+																									value={record.tradeType}
+																									onChange={e => {
+																										const newRecords = [...editData.tradeRecords];
+																										newRecords[idx].tradeType = e.target.value;
+																										setEditData(prev => ({ ...prev, tradeRecords: newRecords }));
+																									}}
+																									className="border px-1 py-0.5 rounded w-full"
+																								/>
+																							</td>
+																							<td className="px-2 py-1">
+																								<input
+																									type="text"
+																									value={record.stockName}
+																									onChange={e => {
+																										const newRecords = [...editData.tradeRecords];
+																										newRecords[idx].stockName = e.target.value;
+																										setEditData(prev => ({ ...prev, tradeRecords: newRecords }));
+																									}}
+																									className="border px-1 py-0.5 rounded w-full"
+																								/>
+																							</td>
+																							<td className="px-2 py-1">
+																								<input
+																									type="number"
+																									value={record.stockQty}
+																									onChange={e => {
+																										const newRecords = [...editData.tradeRecords];
+																										newRecords[idx].stockQty = Number(e.target.value);
+																										setEditData(prev => ({ ...prev, tradeRecords: newRecords }));
+																									}}
+																									className="border px-1 py-0.5 rounded w-full"
+																								/>
+																							</td>
+																							<td className="px-2 py-1">
+																								<input
+																									type="number"
+																									value={record.profitLoss}
+																									onChange={e => {
+																										const newRecords = [...editData.tradeRecords];
+																										newRecords[idx].profitLoss = Number(e.target.value);
+																										setEditData(prev => ({ ...prev, tradeRecords: newRecords }));
+																									}}
+																									className="border px-1 py-0.5 rounded w-full"
+																								/>
+																							</td>
+																						</tr>
+																					))}
+																				</tbody>
+																			</table>
+																		</div>
+																	</div>
+																)}
+																<div className="flex gap-2 mt-2">
+																	<button type="submit" className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Save</button>
+																	<button type="button" onClick={() => setEditId(null)} className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded">Cancel</button>
+																</div>
+															</form>
+										) : (
+											<div>
+												<div className="flex flex-wrap gap-4 mb-2">
+													<div><span className="font-semibold">Date:</span> {entry.date}</div>
+													<div><span className="font-semibold">Day:</span> {entry.day}</div>
+													<div><span className="font-semibold">Overall P/L:</span> {entry.overallProfitLoss}</div>
+													<div><span className="font-semibold">Net P/L:</span> {entry.netProfitLoss}</div>
+													<div><span className="font-semibold">Gov Charges:</span> {entry.govCharges}</div>
+													<div><span className="font-semibold">Brokarage:</span> {entry.brokarage}</div>
+													<div><span className="font-semibold">Total Trade:</span> {entry.totalTrade}</div>
+													<div><span className="font-semibold">Trade Type:</span> {entry.tradeType}</div>
+													<div><span className="font-semibold">Indicators:</span> {entry.tradeIndicators}</div>
+												</div>
+												<div className="flex gap-2 mb-2">
+													<button onClick={() => handleEdit(entry)} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Edit</button>
+													<button onClick={() => handleDelete(entry._id)} className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Delete</button>
+												</div>
+											</div>
+										)}
+										{/* Trade Records Section */}
+										{entry.tradeRecords && entry.tradeRecords.length > 0 && (
+											<div className="mt-4">
+												<div className="font-semibold mb-2 text-gray-700 dark:text-gray-200">Trade Records:</div>
+												<div className="overflow-x-auto">
+													<table className="min-w-full text-xs border border-gray-200 dark:border-gray-700 rounded">
+														<thead className="bg-gray-100 dark:bg-gray-700">
+															<tr>
+																<th className="px-2 py-2">Type</th>
+																<th className="px-2 py-2">Stock Name</th>
+																<th className="px-2 py-2">Qty</th>
+																<th className="px-2 py-2">Profit/Loss</th>
+															</tr>
+														</thead>
+														<tbody>
+															{entry.tradeRecords.map((record, idx) => (
+																<tr key={idx} className="border-t">
+																	<td className="px-2 py-1">{record.tradeType}</td>
+																	<td className="px-2 py-1">{record.stockName}</td>
+																	<td className="px-2 py-1">{record.stockQty}</td>
+																	<td className="px-2 py-1">{record.profitLoss}</td>
+																</tr>
+															))}
+														</tbody>
+													</table>
+												</div>
+											</div>
+										)}
+									</div>
+								))}
+							</div>
+						)}
 			</div>
 		</AdminLayout>
 	);

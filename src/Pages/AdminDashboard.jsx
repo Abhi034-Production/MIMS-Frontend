@@ -12,6 +12,8 @@ import {
   MdOutlineHome,
 } from "react-icons/md";
 import { format, parseISO } from "date-fns";
+import { jsPDF } from "jspdf";
+
 
 const AdminDashboard = () => {
   const [summaryData, setSummaryData] = useState({
@@ -29,6 +31,20 @@ const AdminDashboard = () => {
 
   const { user } = useContext(AuthContext);
   const [businessProfile, setBusinessProfile] = useState(null);
+
+
+  
+    const downloadLowStockPDF = () => {
+      const doc = new jsPDF();
+      doc.text("Low Stock Inventory Report", 14, 15);
+      autoTable(doc, {
+        startY: 25,
+        head: [["Product Name", "Quantity", "Price"]],
+        body: lowStock.map(item => [item.name, item.quantity, `₹${item.price}`]),
+      });
+      doc.save("low_stock_inventory.pdf");
+    };
+  
 
   useEffect(() => {
     if (!user || !user.email) return;
@@ -216,7 +232,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Low Stock Section */}
-        <div className="p-6 bg-white dark:text-white dark:bg-gray-800 rounded-2xl shadow hover:shadow-lg transition duration-300 mt-8">
+        {/* <div className="p-6 bg-white dark:text-white dark:bg-gray-800 rounded-2xl shadow hover:shadow-lg transition duration-300 mt-8">
           <div className="flex items-center gap-3 mb-4">
             <MdInventory className="text-2xl text-red-600" />
             <h2 className="text-lg font-semibold text-gray-700 dark:text-white">Low Stock Inventory (Less than 5)</h2>
@@ -234,7 +250,43 @@ const AdminDashboard = () => {
           ) : (
             <p className="text-sm text-gray-500 dark:text-gray-300">All inventory is sufficiently stocked.</p>
           )}
-        </div>
+        </div> */}
+
+
+        
+        
+                  {/* ✅ Low Stock Section */}
+                  <div className="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow hover:shadow-lg transition duration-300 mt-8">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <MdInventory className="text-2xl text-red-600" />
+                        <h2 className="text-lg font-semibold text-gray-700 dark:text-white">Low Stock Inventory (Less than 5)</h2>
+                      </div>
+                      {lowStock.length > 0 && (
+                        <button
+                          onClick={downloadLowStockPDF}
+                          className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md text-sm"
+                        >
+                          📄 Download PDF
+                        </button>
+                      )}
+                    </div>
+        
+                    {lowStock.length > 0 ? (
+                      <ul className="divide-y divide-gray-200">
+                        {lowStock.map((product, index) => (
+                          <li key={index} className="flex justify-between py-3 text-gray-700 dark:text-white">
+                            <span>{product.name}</span>
+                            <span className="text-sm">Qty: {product.quantity} | ₹{product.price}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-gray-500 dark:text-white">All inventory is sufficiently stocked.</p>
+                    )}
+                  </div>
+        
+        
       </div>
     </AdminLayout>
   );

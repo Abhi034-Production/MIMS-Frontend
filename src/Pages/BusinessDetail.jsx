@@ -87,8 +87,8 @@ const BusinessDetail = () => {
     }
   };
 
-  if (loading) return <AdminLayout><div className="text-center py-10"><Spinner /></div></AdminLayout>;
-  if (!profile) return <AdminLayout><div className="text-center py-10 text-red-500">No business profile found.</div></AdminLayout>;
+  if (loading) return <AdminLayout> <div className="text-center py-10"><Spinner /></div></AdminLayout>;
+  if (!profile) return <AdminLayout> <div className="text-center py-10 text-red-500">No business profile found.</div></AdminLayout>;
 
   return (
     <AdminLayout>
@@ -134,7 +134,7 @@ const BusinessDetail = () => {
               <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
                 <span className="w-40 sm:w-48 font-semibold text-gray-700 dark:text-white text-base sm:text-lg">Email:</span>
                 {editMode ? (
-                  <input type="email" name="businessEmail" value={form.businessEmail || ""} onChange={handleChange} required className="flex-1 px-3 sm:px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-900 dark:text-white text-base sm:text-lg" />
+                  <input type="email" name="businessEmail" value={form.businessEmail || ""} onChange={handleChange} readOnly className="flex-1 px-3 sm:px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-900 dark:text-white text-base sm:text-lg" />
                 ) : (
                   <span className="text-base sm:text-xl text-gray-900 dark:text-white font-semibold">{profile.businessEmail}</span>
                 )}
