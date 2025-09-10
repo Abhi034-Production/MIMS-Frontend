@@ -1,3 +1,464 @@
+
+require("dotenv").config();
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const bcrypt = require("bcrypt");
+const SignupModel = require("./models/adminsignup");
+const ProductModel = require("./models/product");
+const IntradayEntry = require("./models/intradayentrymodel");
+
+
+
+const nodemailer = require("nodemailer");
+const BusinessProfile = require("./models/businessprofile");
+const multer = require("multer");
+const path = require("path");
+
+// Multer config for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, "uploads"));
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname);
+  }
+});
+const upload = multer({ storage });
+
+// Ensure uploads directory exists
+const fs = require("fs");
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
+
+const app = express();
+
+let otpStore = {};
+
+const allowedOrigins = ["https://mimsp.netlify.app" , "http://localhost:5173"];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+  })
+);
+
+
+app.use(express.json());
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+
+
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB Connected"))
+  .catch(err => console.log("MongoDB Connection Error:", err));
+
+
+app.get("/run", (req, res) => {
+  res.send("Backend is running!");
+});
+
+
+
+// Get Intraday Entries by business email
+app.get("/intraday-entries", async (req, res) => {
+  try {
+    const { userEmail } = req.query;
+    if (!userEmail) return res.status(400).json({ error: "userEmail is required" });
+    const entries = await IntradayEntry.find({ userEmail });
+    res.json(entries);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete Intraday Entry by ID
+app.delete("/intraday-entry/:id", async (req, res) => {
+  try {
+    await IntradayEntry.findByIdAndDelete(req.params.id);
+    res.json({ message: "Entry deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Edit Intraday Entry by ID
+app.put("/intraday-entry/:id", async (req, res) => {
+  try {
+    const updated = await IntradayEntry.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Save Intraday Entry
+app.post("/intraday-new-entry", async (req, res) => {
+  try {
+    const entry = new IntradayEntry(req.body);
+    await entry.save();
+    res.status(201).json({ message: "Intraday entry saved successfully!" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+app.post("/business-profile", upload.fields([
+  { name: "businessLogo", maxCount: 1 },
+  { name: "businessStamp", maxCount: 1 }
+]), async (req, res) => {
+  try {
+    const {
+      userEmail,
+      businessName,
+      businessMobile,
+      businessAddress,
+      businessEmail,
+      businessCategory,
+    } = req.body;
+
+    // File paths
+    let businessLogo = null;
+    let businessStamp = null;
+    if (req.files["businessLogo"]) {
+      businessLogo = `/uploads/${req.files["businessLogo"][0].filename}`;
+    }
+    if (req.files["businessStamp"]) {
+      businessStamp = `/uploads/${req.files["businessStamp"][0].filename}`;
+    }
+
+    // Upsert: update if exists, else create
+    const update = {
+      businessName,
+      businessMobile,
+      businessAddress,
+      businessEmail,
+      businessCategory,
+    };
+    if (businessLogo) update.businessLogo = businessLogo;
+    if (businessStamp) update.businessStamp = businessStamp;
+
+    const profile = await BusinessProfile.findOneAndUpdate(
+      { userEmail },
+      update,
+      { new: true, upsert: true }
+    );
+    console.log("[ALERT] Business profile created/updated for:", userEmail);
+    res.json({ status: "success", profile });
+  } catch (error) {
+    console.error("[ALERT] Error in /business-profile:", error.message);
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+// Get business profile by user email
+app.get("/business-profile/:userEmail", async (req, res) => {
+  try {
+    const { userEmail } = req.params;
+    const profile = await BusinessProfile.findOne({ userEmail });
+    if (!profile) {
+      console.log(`[ALERT] Business profile not found for: ${userEmail}`);
+      return res.status(404).json({ status: "not_found" });
+    }
+    console.log(`[ALERT] Business profile fetched for: ${userEmail}`);
+    res.json({ status: "success", profile });
+  } catch (error) {
+    console.error("[ALERT] Error in GET /business-profile/:userEmail:", error.message);
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+// Update business profile (edit)
+app.put("/business-profile/:userEmail", upload.fields([
+  { name: "businessLogo", maxCount: 1 },
+  { name: "businessStamp", maxCount: 1 }
+]), async (req, res) => {
+  try {
+    const { userEmail } = req.params;
+    const {
+      businessName,
+      businessMobile,
+      businessAddress,
+      businessEmail,
+      businessCategory,
+    } = req.body;
+
+    // File paths
+    let businessLogo = null;
+    let businessStamp = null;
+    if (req.files["businessLogo"]) {
+      businessLogo = `/uploads/${req.files["businessLogo"][0].filename}`;
+    }
+    if (req.files["businessStamp"]) {
+      businessStamp = `/uploads/${req.files["businessStamp"][0].filename}`;
+    }
+
+    // Build update object
+    const update = {
+      businessName,
+      businessMobile,
+      businessAddress,
+      businessEmail,
+      businessCategory,
+    };
+    if (businessLogo) update.businessLogo = businessLogo;
+    if (businessStamp) update.businessStamp = businessStamp;
+
+    const profile = await BusinessProfile.findOneAndUpdate(
+      { userEmail },
+      update,
+      { new: true }
+    );
+    if (!profile) {
+      return res.status(404).json({ status: "not_found" });
+    }
+    console.log("[ALERT] Business profile updated for:", userEmail);
+    res.json({ status: "success", profile });
+  } catch (error) {
+    console.error("[ALERT] Error in PUT /business-profile/:userEmail:", error.message);
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+// Non-OTP Login
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  const user = await SignupModel.findOne({ email });
+
+  if (user) {
+    if (await bcrypt.compare(password, user.password)) {
+      res.send("success");
+    } else {
+      res.send("incorrect password");
+    }
+  } else {
+    res.send("no record exists");
+  }
+});
+
+// Get user data
+app.post("/get-user", async (req, res) => {
+  const { email } = req.body;
+  const user = await SignupModel.findOne({ email });
+
+  if (user) {
+    res.json({ status: "success", name: user.name });
+  } else {
+    res.status(404).json({ status: "error", message: "User not found" });
+  }
+});
+
+// Update Admin Info
+app.put("/update-admin", async (req, res) => {
+  const { email, name, password } = req.body;
+  try {
+    const update = { name };
+    if (password) {
+      update.password = await bcrypt.hash(password, 10);
+    }
+    await SignupModel.findOneAndUpdate({ email }, update);
+    res.json({ status: "success" });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  const user = await SignupModel.findOne({ email });
+  if (user) {
+    if (await bcrypt.compare(password, user.password)) {
+      res.json("success");
+    } else {
+      res.json("incorrect password");
+    }
+  } else {
+    res.json("no record exists");
+  }
+});
+
+app.post("/register", async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await SignupModel.create({ name, email, password: hashedPassword });
+    res.json(newUser);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+// Add Products
+app.post("/add-product", async (req, res) => {
+  try {
+    const { name, quantity, price, email } = req.body;
+    const newProduct = await ProductModel.create({ name, quantity, price, email });
+    res.json(newProduct);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Fetch All Products
+app.get("/products", async (req, res) => {
+  try {
+    const { email } = req.query;
+    let products;
+    if (email) {
+      products = await ProductModel.find({ email });
+    } else {
+      products = await ProductModel.find();
+    }
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete Product
+app.delete("/delete-product/:id", async (req, res) => {
+  try {
+    await ProductModel.findByIdAndDelete(req.params.id);
+    res.json({ message: "Product deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update Product
+app.put("/update-product/:id", async (req, res) => {
+  try {
+    const { name, quantity, price, email } = req.body;
+    const updatedProduct = await ProductModel.findByIdAndUpdate(
+      req.params.id,
+      { name, quantity, price, email },
+      { new: true }
+    );
+    res.json(updatedProduct);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+const Bill = require("./models/billmodel");
+
+app.post("/save-bill", async (req, res) => {
+  try {
+    // Attach businessEmail to bill and to each order item
+    const { businessEmail, ...rest } = req.body;
+    const orderWithEmail = (rest.order || []).map(item => ({ ...item, email: businessEmail }));
+    const newBill = new Bill({ ...rest, businessEmail, order: orderWithEmail });
+    await newBill.save();
+
+    for (const item of orderWithEmail) {
+      const updatedProduct = await ProductModel.findOneAndUpdate(
+        { name: item.productName },
+        { $inc: { quantity: -item.quantity } },
+        { new: true }
+      );
+      if (updatedProduct && updatedProduct.quantity <= 0) {
+        await ProductModel.findByIdAndUpdate(updatedProduct._id, { quantity: 0 });
+      }
+    }
+
+    res.status(201).json({ message: "Bill saved & inventory updated successfully!" });
+  } catch (error) {
+    res.status(500).json({ error: "Error saving bill or updating inventory." });
+  }
+});
+
+
+
+
+
+
+app.get("/top-selling-products", async (req, res) => {
+  try {
+    const bills = await Bill.find();
+    const products = await ProductModel.find();
+
+    let productSales = {};
+
+    bills.forEach((bill) => {
+      bill.order.forEach((item) => {
+        if (productSales[item.productName]) {
+          productSales[item.productName] += item.quantity;
+        } else {
+          productSales[item.productName] = item.quantity;
+        }
+      });
+    });
+
+    const productDetails = products.map((product) => {
+      const soldQuantity = productSales[product.name] || 0;
+      const isOutOfStock = product.quantity <= 0;
+      return {
+        name: product.name,
+        quantitySold: soldQuantity,
+        quantityInStock: product.quantity,
+        isOutOfStock
+      };
+    });
+
+    const sortedProducts = productDetails
+      .sort((a, b) => b.quantitySold - a.quantitySold);
+
+    res.json(sortedProducts);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch top-selling products." });
+  }
+});
+
+
+
+
+app.get("/bills", async (req, res) => {
+  try {
+    const { businessEmail } = req.query;
+    let bills;
+    if (businessEmail) {
+      bills = await Bill.find({ businessEmail });
+    } else {
+      bills = await Bill.find();
+    }
+    res.json(bills);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch bills" });
+  }
+});
+
+
+
+
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
+
+
+
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { AuthContext } from "../Context/AuthContext";
 import axios from "axios";
@@ -6,8 +467,53 @@ import jsPDF from "jspdf";
 import AdminLayout from "../Components/AdminLayout";
 import { Link } from "react-router-dom";
 import { MdFileDownload, MdSearch, MdOutlineHome } from "react-icons/md";
+import { Helmet } from "react-helmet-async";
+import Seo from "../Components/Seo";
+
 
 const Orders = () => {
+  const shareInvoiceOnWhatsApp = async () => {
+    const buttons = document.querySelector("#invoice-actions");
+    if (buttons) buttons.style.display = "none";
+    try {
+      const canvas = await html2canvas(invoiceRef.current, {
+        scale: 1.5,
+        quality: 0.8,
+        logging: false,
+        useCORS: true,
+        backgroundColor: "#FFFFFF"
+      });
+      const imgData = canvas.toDataURL("image/jpeg", 0.8);
+      const pdf = new jsPDF("p", "mm", "a5");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
+      pdf.addImage(imgData, "JPEG", 0, 0, pageWidth, pdfHeight);
+      const pdfBlob = pdf.output("blob");
+      const formData = new FormData();
+      formData.append("file", pdfBlob, `invoice_${selectedBill._id}.pdf`);
+      const uploadResponse = await fetch("https://tmpfiles.org/api/v1/upload", {
+        method: "POST",
+        body: formData
+      });
+      const uploadData = await uploadResponse.json();
+      if (!uploadData?.data?.url) {
+        throw new Error("Failed to upload PDF");
+      }
+      const pdfUrl = uploadData.data.url.replace("tmpfiles.org/", "tmpfiles.org/dl/");
+      const name = selectedBill?.customer?.name || "Customer";
+      let mobile = selectedBill?.customer?.mobile || "";
+      mobile = mobile.replace(/\D/g, "");
+      if (!mobile.startsWith("91")) mobile = "91" + mobile;
+      const message = `Hello ${name},\n\nHere is your invoice from ${businessProfile?.businessName || 'Our Shop'}:\n${pdfUrl}\n\nThank you for your business!`;
+      const whatsappLink = `https://wa.me/${mobile}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappLink, "_blank");
+    } catch (err) {
+      alert("Error sharing invoice. Please try downloading and sharing manually.");
+    } finally {
+      if (buttons) buttons.style.display = "flex";
+    }
+  };
   const [bills, setBills] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredBills, setFilteredBills] = useState([]);
@@ -21,7 +527,6 @@ const Orders = () => {
   const [businessProfile, setBusinessProfile] = useState(null);
 
 
-
   useEffect(() => {
     if (!user || !user.email) return;
     fetch(`https://mims-backend-x0i3.onrender.com/business-profile/${user.email}`)
@@ -31,23 +536,23 @@ const Orders = () => {
           setBusinessProfile(data.profile);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [user]);
 
-useEffect(() => {
-  axios.get(`https://mims-backend-x0i3.onrender.com/bills`)
-    .then((res) => {
-      const sorted = res.data.sort((a, b) => new Date(b.billDate) - new Date(a.billDate));
-      if (businessProfile && businessProfile.businessEmail) {
-        const filtered = sorted.filter(bill => bill.businessEmail && bill.businessEmail === businessProfile.businessEmail);
-        setBills(filtered);
-        setFilteredBills(filtered);
-      } else {
-        setBills(sorted);
-        setFilteredBills(sorted);
-      }
-    }).catch((err) => console.error("Error fetching:", err));
-}, [businessProfile]);
+  useEffect(() => {
+    axios.get(`https://mims-backend-x0i3.onrender.com/bills`)
+      .then((res) => {
+        const sorted = res.data.sort((a, b) => new Date(b.billDate) - new Date(a.billDate));
+        if (businessProfile && businessProfile.businessEmail) {
+          const filtered = sorted.filter(bill => bill.businessEmail && bill.businessEmail === businessProfile.businessEmail);
+          setBills(filtered);
+          setFilteredBills(filtered);
+        } else {
+          setBills(sorted);
+          setFilteredBills(sorted);
+        }
+      }).catch((err) => console.error("Error fetching:", err));
+  }, [businessProfile]);
 
   const handleSearchClick = () => {
     const filtered = bills.filter(bill =>
@@ -61,13 +566,13 @@ useEffect(() => {
   const handleDownloadInvoice = (bill) => {
     setSelectedBill(bill);
     setImagesLoaded(false);
-    
+
     const logo = new Image();
     logo.src = businessProfile?.businessLogo ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessLogo}` : "Please upload a logo";
 
     const stamp = new Image();
     stamp.src = businessProfile?.businessStamp ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessStamp}` : "Please upload a stamp";
-    
+
     Promise.all([
       new Promise(resolve => { logo.onload = resolve; }),
       new Promise(resolve => { stamp.onload = resolve; })
@@ -124,15 +629,24 @@ useEffect(() => {
 
   return (
     <AdminLayout>
-      <div className="p-6 min-h-screen bg-gray-50 dark:bg-gray-900 dark:text-white transition-colors">
-        <div className="text-sm text-gray-600 mb-4 dark:text-white">
-          <nav className="flex items-center space-x-2">
-            <Link to="/home"><MdOutlineHome fontSize={20} /></Link>
-            <span className="text-gray-400 dark:text-white">/</span>
-            <span className="font-semibold text-gray-800 dark:text-white">Orders</span>
-          </nav>
-        </div>
 
+      <Seo
+        title="Orders | easyinventory"
+        description="View and manage all customer orders in easyinventory. Download invoices, share via WhatsApp, and keep track of your business."
+        keywords="orders, invoices, billing, customer orders, easyinventory"
+        canonical="/orders"
+        url="https://easyinventory.online/orders"
+      />
+
+      <div className="text-sm text-gray-600 mb-4 dark:text-white">
+        <nav className="flex items-center space-x-2">
+          <Link to="/home"><MdOutlineHome fontSize={20} /></Link>
+          <span className="text-gray-400 dark:text-white">/</span>
+          <span className="font-semibold text-gray-800 dark:text-white">Orders</span>
+        </nav>
+      </div>
+
+      <div className="p-6 min-h-screen bg-gray-50 dark:bg-gray-900 dark:text-white transition-colors">
         <div className="flex flex-col sm:flex-row justify-end items-center gap-4">
           <input
             type="search"
@@ -185,16 +699,16 @@ useEffect(() => {
         </div>
 
         <div className="flex justify-between items-center mt-6 dark:text-white">
-          <button 
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
-            disabled={currentPage === 1} 
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
             className="px-4 py-2 bg-gray-300 dark:bg-gray-700 dark:border dark:border-gray-600 rounded disabled:opacity-50 dark:text-white transition-colors">
             <span className="dark:text-white">Previous</span>
           </button>
           <span className="text-sm font-semibold dark:text-white">Page {currentPage} of {totalPages}</span>
-          <button 
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
-            disabled={currentPage === totalPages} 
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
             className="px-4 py-2 bg-gray-300 dark:bg-gray-700 dark:border dark:border-gray-600 rounded disabled:opacity-50 dark:text-white transition-colors">
             <span className="dark:text-white">Next</span>
           </button>
@@ -309,7 +823,12 @@ useEffect(() => {
                 >
                   Download PDF
                 </button>
-              
+                <button
+                  onClick={shareInvoiceOnWhatsApp}
+                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                >
+                  Share via WhatsApp
+                </button>
                 <button
                   onClick={closeModal}
                   className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
@@ -327,745 +846,223 @@ useEffect(() => {
 
 export default Orders;
 
-import React, { useState, useEffect, useRef, useContext } from "react";
-import { AuthContext } from "../Context/AuthContext";
-import axios from "axios";
+import React, { useEffect, useState, useContext, useRef } from "react";
 import AdminLayout from "../Components/AdminLayout";
+import { AuthContext } from "../Context/AuthContext";
 import { Link } from "react-router-dom";
-import { ToastContainer, toast } from 'react-toastify';
 import { MdOutlineHome, MdFileDownload } from 'react-icons/md';
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-import Spinner from "../Components/Spinner";
+import Spinner from '../Components/Spinner'
+import { Helmet } from "react-helmet-async";
+import Seo from "../Components/Seo";
 
-
-
-const Billing = () => {
-  const [products, setProducts] = useState([]);
-  const [order, setOrder] = useState([]);
-  const [selectedProductId, setSelectedProductId] = useState("");
-  const [quantity, setQuantity] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [recentBills, setRecentBills] = useState([]);
-  const [customer, setCustomer] = useState({ name: "", mobile: "", email: "" });
-  const [billDate, setBillDate] = useState("");
-  const [selectedBill, setSelectedBill] = useState(null);
-  const [showPreview, setShowPreview] = useState(false);
-  const [editPriceMode, setEditPriceMode] = useState(false);
-  const [tempPrices, setTempPrices] = useState({});
-  const invoiceRef = useRef(null);
+const BusinessDetail = () => {
   const { user } = useContext(AuthContext);
-  const [businessProfile, setBusinessProfile] = useState(null);
-
+  const [profile, setProfile] = useState(null);
+  const [editMode, setEditMode] = useState(true);
+  const [form, setForm] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
+  const isEditingRef = useRef(false);
 
   useEffect(() => {
     if (!user || !user.email) return;
+    setLoading(true);
     fetch(`https://mims-backend-x0i3.onrender.com/business-profile/${user.email}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.status === "success") {
-          setBusinessProfile(data.profile);
+          setProfile(data.profile);
+          if (!isEditingRef.current) {
+            setForm(data.profile);
+          }
         }
+        setLoading(false);
       })
-      .catch(() => { });
+      .catch(() => setLoading(false));
   }, [user]);
 
-  useEffect(() => {
-    axios.get("https://mims-backend-x0i3.onrender.com/products")
-      .then((res) => setProducts(res.data))
-      .catch((err) => console.error("Error fetching products:", err));
-  }, []);
 
-  useEffect(() => {
-    const now = new Date();
-    setBillDate(now.toISOString().slice(0, 16));
-  }, []);
-
-  const fetchRecentBills = () => {
-    axios.get("https://mims-backend-x0i3.onrender.com/bills")
-      .then((res) => {
-        const sorted = res.data.sort((a, b) => new Date(b.billDate) - new Date(a.billDate));
-        setRecentBills(sorted.slice(0, 4));
-      })
-      .catch((err) => console.error("Error fetching recent bills:", err));
-  };
-
-  useEffect(() => {
-    fetchRecentBills();
-  }, []);
-
-  const addToOrder = () => {
-    const product = products.find((p) => p._id === selectedProductId);
-    if (!product) return;
-    const currentPrice = tempPrices[selectedProductId] || product.price;
-    if (quantity > 0 && quantity <= product.quantity) {
-      const existingProduct = order.find((item) => item._id === product._id);
-      if (existingProduct) {
-        const updatedOrder = order.map((item) =>
-          item._id === product._id
-            ? {
-              ...item,
-              orderQuantity: item.orderQuantity + quantity,
-              price: currentPrice,
-              totalPrice: (item.orderQuantity + quantity) * currentPrice
-            }
-            : item
-        );
-        setOrder(updatedOrder);
-      } else {
-        const orderProduct = {
-          ...product,
-          price: currentPrice,
-          orderQuantity: quantity,
-          totalPrice: quantity * currentPrice,
-        };
-        setOrder([...order, orderProduct]);
-      }
-
-      if (tempPrices[selectedProductId]) {
-        const newTempPrices = { ...tempPrices };
-        delete newTempPrices[selectedProductId];
-        setTempPrices(newTempPrices);
-      }
-
-    } else {
-      toast.error("Invalid quantity or product");
-    }
-  };
-
-  useEffect(() => {
-    const totalAmount = order.reduce((acc, item) => acc + item.totalPrice, 0);
-    setTotal(totalAmount);
-  }, [order]);
-
-  const removeFromOrder = (id) => {
-    const updatedOrder = order.filter((item) => item._id !== id);
-    setOrder(updatedOrder);
-  };
-
-  const handleCustomerChange = (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setCustomer({ ...customer, [name]: value });
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleDownloadInvoice = (bill) => {
-    setSelectedBill(bill);
+  const handleFileChange = (e) => {
+    const { name, files } = e.target;
+    setForm((prev) => ({ ...prev, [name]: files[0] }));
   };
 
-  const closeModal = () => {
-    setSelectedBill(null);
-    setShowPreview(false);
+  const handleEdit = () => {
+    isEditingRef.current = true;
+    setEditMode(true);
+    setMessage("");
   };
 
-  const shareInvoiceOnWhatsApp = async () => {
-    const buttonEl = document.querySelector("#invoice-actions");
-    if (buttonEl) buttonEl.style.display = "none";
+  const handleCancel = () => {
+    isEditingRef.current = false;
+    setEditMode(false);
+    setForm(profile);
+    setMessage("");
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setMessage("");
+
+    const formData = new FormData();
+    Object.entries(form).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
+    formData.append("userEmail", user.email);
 
     try {
-      const canvas = await html2canvas(invoiceRef.current, {
-        scale: 1.5,
-        quality: 0.8,
-        logging: false,
-        useCORS: true
-      });
-
-      const imgData = canvas.toDataURL("image/jpeg", 0.8);
-      // Use A5 size for PDF
-      const pdf = new jsPDF("p", "mm", "a5");
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
-
-      pdf.addImage(imgData, "JPEG", 0, 0, pageWidth, pdfHeight);
-
-      const pdfBlob = pdf.output("blob");
-
-      const formData = new FormData();
-      formData.append("file", pdfBlob, `invoice_${selectedBill._id}.pdf`);
-
-      const uploadResponse = await fetch("https://tmpfiles.org/api/v1/upload", {
+      const res = await fetch("https://mims-backend-x0i3.onrender.com/business-profile", {
         method: "POST",
-        body: formData
+        body: formData,
       });
 
-      const uploadData = await uploadResponse.json();
-
-      if (!uploadData?.data?.url) {
-        throw new Error("Failed to upload PDF");
+      const data = await res.json();
+      if (data.status === "success") {
+        setProfile(data.profile);
+        setForm(data.profile);
+        setEditMode(false);
+        isEditingRef.current = false;
+        setMessage("Profile updated successfully!");
+      } else {
+        setMessage(data.message || "Update failed");
       }
-
-      const pdfUrl = uploadData.data.url.replace("tmpfiles.org/", "tmpfiles.org/dl/");
-
-      const name = selectedBill?.customer?.name || "Customer";
-      let mobile = selectedBill?.customer?.mobile || "";
-      mobile = mobile.replace(/\D/g, "");
-      if (!mobile.startsWith("91")) mobile = "91" + mobile;
-
-      const message = `Hello ${name},\n\nHere is your invoice from Sai Mobile Shop:\n${pdfUrl}\n\nThank you for your business!`;
-      const whatsappLink = `https://wa.me/${mobile}?text=${encodeURIComponent(message)}`;
-
-      window.open(whatsappLink, "_blank");
-
-      toast.success("Invoice shared successfully!");
-
-    } catch (err) {
-      console.error("Error sharing on WhatsApp:", err);
-      toast.error("Error sharing invoice. Please try downloading and sharing manually.");
-    } finally {
-      if (buttonEl) buttonEl.style.display = "flex";
+    } catch {
+      setMessage("Update failed");
     }
   };
 
-  const downloadInvoiceAsPDF = () => {
-    const buttons = document.querySelector("#invoice-actions");
-    if (buttons) buttons.style.display = "none";
-
-    setTimeout(async () => {
-      try {
-        const canvas = await html2canvas(invoiceRef.current, {
-          scale: 1.5,
-          quality: 0.8,
-          logging: false
-        });
-
-        const imgData = canvas.toDataURL("image/jpeg", 0.8);
-        // Use A5 size for PDF
-        const pdf = new jsPDF("p", "mm", "a5");
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const imgProps = pdf.getImageProperties(imgData);
-        const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
-
-        pdf.addImage(imgData, "JPEG", 0, 0, pageWidth, pdfHeight);
-        pdf.save(`invoice_${selectedBill._id}.pdf`);
-      } catch (error) {
-        toast.error("Error generating PDF");
-      } finally {
-        if (buttons) buttons.style.display = "flex";
-      }
-    }, 200);
-
-  };
-
-  const generateAndSharePDF = async () => {
-    if (!customer.name || !/^91\d{10}$/.test(customer.mobile)) {
-      toast.error("Please enter valid name and 10-digit mobile number with '91' prefix.");
-      return;
-    }
-
-    try {
-      const tempBill = {
-        _id: `Invoice_${Math.floor(1000 + Math.random() * 9000)}`,
-        customer,
-        billDate: new Date().toISOString(),
-        order: order.map(item => ({
-          productName: item.name,
-          price: item.price,
-          quantity: item.orderQuantity,
-          totalPrice: item.totalPrice,
-        })),
-        total,
-      };
-
-      setSelectedBill(tempBill);
-      setShowPreview(true);
-    } catch (err) {
-      toast.error("Something went wrong: " + err.message);
-    }
-
-  };
-
-  const handleSaveBill = async () => {
-    const billData = {
-      customer,
-      billDate,
-      order: order.map(item => ({
-        productName: item.name,
-        price: item.price,
-        quantity: item.orderQuantity,
-        totalPrice: item.totalPrice,
-      })),
-      total,
-    businessEmail: businessProfile?.businessEmail || ""
-  };
-
-    try {
-      await axios.post("https://mims-backend-x0i3.onrender.com/save-bill", billData);
-      toast.success("Bill Saved Successfully!");
-      setCustomer({ name: "", mobile: "", email: "" });
-      setOrder([]);
-      setTotal(0);
-      fetchRecentBills();
-      setShowPreview(false);
-    } catch (error) {
-      console.error("Error saving bill:", error);
-    }
-
-  };
-
-  const handleSaveAndShare = async () => {
-    await handleSaveBill();
-    if (selectedBill) {
-      await shareInvoiceOnWhatsApp();
-    }
-  };
+  if (loading) return <AdminLayout> <div className="text-center py-10"><Spinner /></div></AdminLayout>;
+  if (!profile) return <AdminLayout> <div className="text-center py-10 text-red-500">No business profile found.</div></AdminLayout>;
 
   return (
     <AdminLayout>
+
+      <Seo
+        title="Business Details | easyinventory"
+        description="View and update your business profile including name, contact info, logo, and stamp on easyinventory."
+        keywords="business profile, business details, company logo, business stamp, easyinventory"
+        url="https://easyinventory.online/business-details"
+      />
+
+
       <div className="text-sm text-gray-600 mb-4 dark:text-white">
         <nav className="flex items-center space-x-2 dark:text-white">
           <Link to='/home'><MdOutlineHome fontSize={20} /></Link>
           <span className="text-gray-400 dark:text-white">/</span>
-          <span className="font-semibold text-gray-800 dark:text-white">Billing</span>
+          <span className="font-semibold text-gray-800 dark:text-white">Business-Details</span>
         </nav>
       </div>
 
-      <div className="p-4 md:p-6 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
-        {/* Customer Form */}
-           <input type="hidden" name="businessEmail" value={businessProfile?.businessEmail || ''} readOnly />
-          
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6 transition-colors">
-          {['name', 'mobile', 'email'].map((field, idx) => (
-            <div key={idx}>
-              <label className="block text-sm font-medium text-gray-600 dark:text-white mb-1 capitalize">{field}:</label>
-              <input
-                type={field === 'email' ? 'email' : field === 'mobile' ? 'tel' : 'text'}
-                name={field}
-                placeholder={`Enter ${field}`}
-                value={customer[field]}
-                onChange={handleCustomerChange}
-                className="w-full border border-gray-300 rounded-md p-2 focus:outline-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
-                required
-              />
-            </div>
-          ))}
-        </div>
 
-        {/* Product Selection */}
-
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6 transition-colors">
-          <div className="flex flex-col md:flex-row md:items-end gap-4">
-            {/* Product */}
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-600 dark:text-white mb-1">Product:</label>
-              <select
-                value={selectedProductId}
-                onChange={(e) => setSelectedProductId(e.target.value)}
-                className="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 bg-white dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select Product</option>
-                {products
-                  .filter(product => !businessProfile || !businessProfile.businessEmail || product.email === businessProfile.businessEmail)
-                  .map(product => (
-                    <option key={product._id} value={product._id}>
-                      {product.name} - ₹{product.price.toFixed(2)}
-                    </option>
-                  ))}
-              </select>
-              {/* Hidden input for business email */}
-             </div>
-            {/* Quantity */}
-            <div className="w-full md:w-40">
-              <label className="block text-sm font-medium text-gray-600 dark:text-white mb-1">Quantity:</label>
-              <input
-                type="number"
-                min="1"
-                value={quantity}
-                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                className="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-900 dark:text-white"
-                required
-              />
-            </div>
-            {/* Add Button */}
-            <div className="w-full md:w-32 flex items-end">
-              <button
-                onClick={addToOrder}
-                className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-2 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                ADD
-              </button>
-            </div>
-          </div>
-
-          <br />
-
-          {selectedProductId && (
-            <div className="md:col-span-2 flex w-full flex-col">
-              <label className="block text-sm font-medium text-gray-600 dark:text-white mb-1">Price:</label>
-              <div className="flex items-center gap-2 h-full">
-                <button
-                  type="button"
-                  onClick={() => setEditPriceMode(!editPriceMode)}
-                  className={`h-12 px-4 rounded-md text-sm font-medium transition-colors flex-shrink-0 ${editPriceMode
-                      ? 'bg-green-600 text-white hover:bg-green-700'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600'
-                    }`}
-                >
-                  {editPriceMode ? 'Editing' : 'Edit'}
-                </button>
-                {editPriceMode && (
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="New Price"
-                    value={tempPrices[selectedProductId] || ''}
-                    onChange={(e) => {
-                      const newPrice = parseFloat(e.target.value);
-                      setTempPrices({
-                        ...tempPrices,
-                        [selectedProductId]: isNaN(newPrice) ? '' : newPrice
-                      });
-                    }}
-                    className="h-12 w-full border border-gray-300 dark:border-gray-600 rounded-md p-4 text-base bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+      <div className="w-full mx-auto bg-white dark:bg-gray-900 p-6 sm:p-8 md:p-10 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 mt-10">
+        <h2 className="hidden text-3xl sm:text-4xl font-extrabold mb-8 sm:mb-10 text-gray-800 dark:text-white text-center tracking-wide">Business Details</h2>
+        {message && <div className="mb-5 text-center hidden text-green-600 font-semibold text-base sm:text-lg">{message}</div>}
+        <form onSubmit={handleSave} encType="multipart/form-data">
+          <div className="flex flex-col gap-6 md:gap-8 w-full">
+            <div className="flex-1 flex flex-col gap-5 sm:gap-7 bg-gray-50/80 dark:bg-gray-800/80 rounded-xl shadow p-4 sm:p-8 w-full min-w-[220px]">
+              <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+                <span className="w-40 sm:w-48 font-semibold text-gray-700 dark:text-white text-base sm:text-lg">Business Name:</span>
+                {editMode ? (
+                  <input type="text" name="businessName" value={form.businessName || ""} onChange={handleChange} required className="flex-1 px-3 sm:px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-900 dark:text-white text-base sm:text-lg" />
+                ) : (
+                  <span className="text-base sm:text-xl text-gray-900 dark:text-white font-semibold">{profile.businessName}</span>
                 )}
               </div>
-            </div>
-          )}
-
-
-          {editPriceMode && (
-            <div className="mt-3 flex justify-end">
-              <button
-                onClick={() => {
-                  setTempPrices({});
-                  setEditPriceMode(false);
-                }}
-                className="text-sm bg-red-100 hover:bg-red-200 text-red-700 font-medium py-1 px-3 rounded-md transition-colors"
-              >
-                Reset All Prices
-              </button>
-            </div>
-          )}
-        </div>
-
-
-        {/* Order Table */}
-        {order.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-2 mb-6 sm:p-0 transition-colors">
-          <table className="w-full text-center text-[10px] xs:text-xs sm:text-sm md:text-base table-fixed break-words">
-            <thead className="bg-gray-100 dark:bg-gray-700">
-              <tr>
-                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Product Name</th>
-                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Price</th>
-                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Quantity</th>
-                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Total</th>
-                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="dark:text-white">
-              {order.map(item => (
-                <tr key={item._id} className="border-b">
-                  <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">{item.name}</td>
-                  <td className="py-1 px-1 sm:px-2 text-blue-600 font-semibold whitespace-normal break-words">₹{item.price.toFixed(2)}</td>
-                  <td className="py-1 px-1 sm:px-2 whitespace-normal break-words">{item.orderQuantity}</td>
-                  <td className="py-1 px-1 sm:px-2 whitespace-normal break-words">₹{item.totalPrice.toFixed(2)}</td>
-                  <td className="py-2">
-                    <button
-                      onClick={() => removeFromOrder(item._id)}
-                      className="bg-red-500 hover:bg-red-600 py-1 px-1 sm:px-2 whitespace-normal break-words"
-                    >
-                      Remove
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        )}
-
-        {/* Save Button */}
-        {order.length > 0 && (
-          <div className="text-center mb-10 flex justify-center gap-4">
-            <button
-              onClick={generateAndSharePDF}
-              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
-            >
-              Preview Invoice
-            </button>
-            <button
-              onClick={handleSaveBill}
-              className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
-            >
-              Save Bill
-            </button>
-          </div>
-        )}
-
-        {/* Recent Orders Table */}
-        {recentBills.length === 0 ? (
-          <div className="flex justify-center items-center py-10">
-            <Spinner />
-            <span className="ml-2 text-gray-500 dark:text-gray-300 hidden">Loading... (wait 10 seconds for more data)</span>
-          </div>
-        ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-2 mb-6 sm:p-0 transition-colors">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Recent Orders</h2>
-            <table className="w-full text-center text-[10px] xs:text-xs sm:text-sm md:text-base table-fixed break-words">
-              <thead className="bg-gray-100 dark:bg-gray-700 dark:text-white">
-                <tr>
-                  <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Customer Name</th>
-                  <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Products</th>
-                  <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Total Price</th>
-                  <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Date</th>
-                  <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Invoice</th>
-                </tr>
-              </thead>
-              <tbody className="dark:text-white">
-                {recentBills
-                  .filter(bill =>
-                    businessProfile && businessProfile.businessEmail
-                      ? bill.businessEmail === businessProfile.businessEmail
-                      : true
-                  )
-                  .map((bill) => (
-                    <tr key={bill._id} className="border-b">
-                      <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">{bill.customer.name}</td>
-                      <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">
-                        <ul className="list-decimal pl-4">
-                          {bill.order.map((item, i) => (
-                            <li key={i} className="dark:text-white">{item.productName} (x{item.quantity}) - ₹{item.price}</li>
-                          ))}
-                        </ul>
-                      </td>
-                      <td className="py-1 px-1 sm:px-2 text-blue-600 font-semibold whitespace-normal break-words">₹{bill.total}</td>
-                      <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">{new Date(bill.billDate).toLocaleString()}</td>
-                      <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">
-                        <button onClick={() => handleDownloadInvoice(bill)}>
-                          <MdFileDownload className="text-blue-600 text-xl" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-     
-        {(showPreview || selectedBill) && selectedBill && (
-          <div className="fixed w-1/2 inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white text-black p-4 rounded shadow-lg w-full max-w-[850px] max-h-[90vh] overflow-auto">
-              <div ref={invoiceRef} className="p-4">
-                <style>{`  
-              body {  
-                font-family: 'Helvetica', Arial, sans-serif;  
-                background-color: #f8e1e1;  
-                margin: 0;  
-                padding: 0;  
-              }  
-              .invoice-container {  
-                max-width: 800px;  
-                margin: 0 auto;  
-                background: #fff;  
-                padding: 25px;  
-                border-radius: 10px;  
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);  
-                font-family: 'Helvetica', Arial, sans-serif;  
-              }  
-              .header {  
-                text-align: center;  
-                border-bottom: 2px solid #f0b8b8;  
-                padding-bottom: 15px;  
-                margin-bottom: 25px;  
-              }  
-              .header h1 {  
-                margin: 10px 0;  
-                font-size: 26px;  
-                color: #d32f2f;  
-              }  
-              .header p {  
-                margin: 5px 0;  
-                color: #444;  
-              }  
-              .invoice-details, .customer-details {  
-                display: flex;  
-                justify-content: space-between;  
-                margin-bottom: 25px;  
-                font-size: 14px;  
-              }  
-              .invoice-details div, .customer-details div {  
-                width: 48%;  
-              }  
-              table {  
-                width: 100%;  
-                border-collapse: collapse;  
-                margin-bottom: 25px;  
-              }  
-              th, td {  
-                border: 1px solid #f0b8b8;  
-                padding: 10px;  
-                text-align: left;  
-              }  
-              th {  
-                background-color: #d32f2f;  
-                color: #fff;  
-              }  
-              .total {  
-                text-align: right;  
-                font-weight: bold;  
-                font-size: 16px;  
-                color: #b71c1c;  
-                margin-top: 10px;  
-              }  
-              .footer {  
-                text-align: center;  
-                margin-top: 25px;  
-                font-size: 13px;  
-                color: #666;  
-                border-top: 1px solid #f0b8b8;  
-                padding-top: 15px;  
-              }  
-              .stamp {  
-                text-align: center;  
-                margin-top: 20px;  
-              }  
-              .stamp img {  
-                max-width: 120px;  
-                margin: 10px 0;  
-              }  
-            `}</style>
-                <div className="invoice-container">
-                  <div className="header">
-                    <div className="flex flex-row-reverse w-full p-2">
-                      <div className="w-9/12">
-                        <h1 className="text-10xl font-extrabold text-center">
-                          {businessProfile?.businessName || 'Business Name'}
-                        </h1>
-                      </div>
-                      <div className="w-3/12 flex items-center">
-                        <img
-                          className="block m-auto -top-4 w-full h-full"
-                          src={businessProfile?.businessLogo ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessLogo}` : "Please upload your business logo"}
-                          alt="Business Logo"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <p>{businessProfile?.businessAddress || 'Business Address'}</p>
-                      <p>
-                        <span>Phone: {businessProfile?.businessMobile || ''}</span>
-                        <span> |  Email: {businessProfile?.businessEmail || ''}</span>
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="invoice-details">
-                    <div>
-                      <p><strong>Invoice Number:</strong> INV-{selectedBill?._id ? selectedBill._id.slice(-6).toUpperCase() : ''}</p>
-                      <p><strong>Date:</strong> {selectedBill?.billDate ? new Date(selectedBill.billDate).toDateString() : ''}</p>
-                    </div>
-                    <div>
-                      <p className="hidden"><strong>Due Date:</strong> {selectedBill?.billDate ? new Date(new Date(selectedBill.billDate).getTime() + 7 * 86400000).toDateString() : ''}</p>
-                      <p><strong>Payment Terms:</strong> Payment Receipt</p>
-                    </div>
-                  </div>
-
-                  <div className="customer-details">
-                    <div>
-                      <p><strong>Customer Details:</strong></p>
-                      <p>{selectedBill?.customer?.name || ''}</p>
-                      <p>Email: {selectedBill?.customer?.email || ''}</p>
-                      <p>Mobile: {selectedBill?.customer?.mobile || ''}</p>
-                    </div>
-                  </div>
-
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Item</th>
-                        <th>Quantity</th>
-                        <th>Unit Price</th>
-                        <th>Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(selectedBill?.order && selectedBill.order.length > 0) ? (
-                        selectedBill.order.map((item2, i) => (
-                          <tr key={i}>
-                            <td>{item2.productName}</td>
-                            <td>{item2.quantity}</td>
-                            <td>₹{item2.price}</td>
-                            <td>₹{item2.totalPrice}</td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr><td colSpan="4" className="text-center">No products found</td></tr>
-                      )}
-                    </tbody>
-                  </table>
-
-                  <div className="total">
-                    <p>Total: ₹{selectedBill?.total || 0}</p>
-                  </div>
-
-                  <div className="footer flex flex-col md:flex-row justify-between mt-0 items-center">
-                    <div className="text-left">
-                      <p>Thank you for shopping at {businessProfile?.businessName || 'Business Name'}!</p>
-                      <p>Terms: All sales are final. Contact us for warranty details.</p>
-                    </div>
-                    <div className="stamp">
-                      <img
-                        className="w-24 h-24 md:w-32 md:h-32 object-contain"
-                        src={businessProfile?.businessStamp ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessStamp}` : "Please upload your business stamp"}
-                        alt="Shop Stamp"
-                      />
-                    </div>
-                  </div>
+              <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+                <span className="w-40 sm:w-48 font-semibold text-gray-700 dark:text-white text-base sm:text-lg">Mobile Number:</span>
+                {editMode ? (
+                  <input type="tel" name="businessMobile" value={form.businessMobile || ""} onChange={handleChange} required className="flex-1 px-3 sm:px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-900 dark:text-white text-base sm:text-lg" />
+                ) : (
+                  <span className="text-base sm:text-xl text-gray-900 dark:text-white font-semibold">{profile.businessMobile}</span>
+                )}
+              </div>
+              <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+                <span className="w-40 sm:w-48 font-semibold text-gray-700 dark:text-white text-base sm:text-lg">Address:</span>
+                {editMode ? (
+                  <input type="text" name="businessAddress" value={form.businessAddress || ""} onChange={handleChange} required className="flex-1 px-3 sm:px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-900 dark:text-white text-base sm:text-lg" />
+                ) : (
+                  <span className="text-base sm:text-xl text-gray-900 dark:text-white font-semibold">{profile.businessAddress}</span>
+                )}
+              </div>
+              <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+                <span className="w-40 sm:w-48 font-semibold text-gray-700 dark:text-white text-base sm:text-lg">Email:</span>
+                {editMode ? (
+                  <input type="email" name="businessEmail" value={form.businessEmail || ""} onChange={handleChange} readOnly className="flex-1 px-3 sm:px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-900 dark:text-white text-base sm:text-lg" />
+                ) : (
+                  <span className="text-base sm:text-xl text-gray-900 dark:text-white font-semibold">{profile.businessEmail}</span>
+                )}
+              </div>
+              <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+                <span className="w-40 sm:w-48 font-semibold text-gray-700 dark:text-white text-base sm:text-lg">Category:</span>
+                {editMode ? (
+                  <input type="text" name="businessCategory" value={form.businessCategory || ""} onChange={handleChange} required className="flex-1 px-3 sm:px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-900 dark:text-white text-base sm:text-lg" />
+                ) : (
+                  <span className="text-base sm:text-xl text-gray-900 dark:text-white font-semibold">{profile.businessCategory}</span>
+                )}
+              </div>
+              <div className="flex flex-col sm:flex-row gap-6 sm:gap-10 mt-6 justify-center items-center">
+                <div className="flex flex-col items-center bg-white dark:bg-gray-900 rounded-xl shadow p-4 w-full max-w-xs">
+                  <span className="font-semibold text-gray-700 dark:text-white mb-2 text-base sm:text-lg">Business Logo</span>
+                  {editMode ? (
+                    <input type="file" name="businessLogo" accept="image/*" onChange={handleFileChange} className="w-28 sm:w-36 md:w-44 text-gray-700 dark:text-white" />
+                  ) : profile.businessLogo ? (
+                    <img src={`https://mims-backend-x0i3.onrender.com${profile.businessLogo}`} alt="Logo" className="h-20 w-20 sm:h-28 sm:w-28 md:h-32 md:w-32 object-cover rounded-full border-2 border-blue-300 dark:border-blue-700 shadow bg-white" />
+                  ) : (
+                    <span className="text-gray-400 italic">No logo</span>
+                  )}
+                </div>
+                <div className="flex flex-col items-center bg-white dark:bg-gray-900 rounded-xl shadow p-4 w-full max-w-xs">
+                  <span className="font-semibold text-gray-700 dark:text-white mb-2 text-base sm:text-lg">Business Stamp/Sign</span>
+                  {editMode ? (
+                    <input type="file" name="businessStamp" accept="image/*" onChange={handleFileChange} className="w-28 sm:w-36 md:w-44 text-gray-700 dark:text-white" />
+                  ) : profile.businessStamp ? (
+                    <img src={`https://mims-backend-x0i3.onrender.com${profile.businessStamp}`} alt="Stamp" className="h-20 w-20 sm:h-28 sm:w-28 md:h-32 md:w-32 object-cover rounded-full border-2 border-blue-300 dark:border-blue-700 shadow bg-white" />
+                  ) : (
+                    <span className="text-gray-400 italic">No stamp/sign</span>
+                  )}
                 </div>
               </div>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-4 sm:gap-6 mt-8 sm:mt-12 justify-center">
+            {editMode ? (
+              <>
+                <button type="submit" className="bg-blue-600 text-white font-bold py-2 px-8 sm:py-2.5 sm:px-12 rounded-xl shadow text-base sm:text-lg transition-all">Save</button>
+                <button type="button" onClick={handleCancel} className="bg-gray-400 text-white font-bold py-2 px-8 sm:py-2.5 sm:px-12 rounded-xl shadow text-base sm:text-lg transition-all">Cancel</button>
+              </>
+            ) : (
+              <button type="button" onClick={handleEdit} className="bg-blue-600 hidden text-white font-bold py-2 px-8 sm:py-2.5 sm:px-12 rounded-xl shadow text-base sm:text-lg transition-all">Edit</button>
+            )}
+          </div>
+        </form>
+      </div>
 
-              <div id="invoice-actions" className="flex flex-wrap justify-end gap-3 mt-4 p-4 sticky bottom-0 bg-white">
-                {showPreview ? (
-                  <>
-                    <button
-                      onClick={handleSaveAndShare}
-                      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-                    >
-                      Save Bill & Share
-                    </button>
-                    <button
-                      onClick={handleSaveBill}
-                      className="bg-blue-600 hidden text-white px-4 py-2 rounded hover:bg-blue-700"
-                    >
-                      Save Bill Only
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={downloadInvoiceAsPDF}
-                      className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
-                    >
-                      Download PDF
-                    </button>
-                    <button
-                      onClick={shareInvoiceOnWhatsApp}
-                      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-                    >
-                      Share via WhatsApp
-                    </button>
-                  </>
-                )}
-                <button
-                  onClick={closeModal}
-                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                >
-                  Close
-                </button>
-              </div>
+      <div className="w-full mx-auto bg-white dark:bg-gray-900 p-6 sm:p-8 md:p-10 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 mt-10">
+        {/* Active User Card Template with Time and Info */}
+        {user && (
+          <div className="flex items-center gap-4 p-4 bg-blue-50 dark:bg-blue-900 rounded-xl shadow border border-blue-200 dark:border-blue-700">
+            <div className="flex-shrink-0 h-12 w-12 rounded-full bg-blue-300 dark:bg-blue-700 flex items-center justify-center text-white text-xl font-bold">
+              {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <div className="text-lg font-semibold text-gray-800 dark:text-white">{user.name || "Active User"}</div>
+              <div className="text-base text-gray-600 dark:text-gray-300">{user.email}</div>
+
+              {user.role && (
+                <div className="text-sm text-gray-500 dark:text-gray-400">Role: User</div>
+              )}
             </div>
           </div>
         )}
-
-        <ToastContainer />
       </div>
     </AdminLayout>
-
   );
 };
 
-export default Billing;
-
-
+export default BusinessDetail;
 

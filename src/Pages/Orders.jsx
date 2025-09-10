@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { AuthContext } from "../Context/AuthContext";
 import axios from "axios";
@@ -6,6 +8,9 @@ import jsPDF from "jspdf";
 import AdminLayout from "../Components/AdminLayout";
 import { Link } from "react-router-dom";
 import { MdFileDownload, MdSearch, MdOutlineHome } from "react-icons/md";
+import { Helmet } from "react-helmet-async";
+import Seo from "../Components/Seo";
+
 
 const Orders = () => {
   const shareInvoiceOnWhatsApp = async () => {
@@ -63,7 +68,6 @@ const Orders = () => {
   const [businessProfile, setBusinessProfile] = useState(null);
 
 
-
   useEffect(() => {
     if (!user || !user.email) return;
     fetch(`https://mims-backend-x0i3.onrender.com/business-profile/${user.email}`)
@@ -73,23 +77,19 @@ const Orders = () => {
           setBusinessProfile(data.profile);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [user]);
 
-useEffect(() => {
-  axios.get(`https://mims-backend-x0i3.onrender.com/bills`)
-    .then((res) => {
-      const sorted = res.data.sort((a, b) => new Date(b.billDate) - new Date(a.billDate));
-      if (businessProfile && businessProfile.businessEmail) {
-        const filtered = sorted.filter(bill => bill.businessEmail && bill.businessEmail === businessProfile.businessEmail);
-        setBills(filtered);
-        setFilteredBills(filtered);
-      } else {
+  useEffect(() => {
+    if (!businessProfile || !businessProfile.businessEmail) return;
+    axios.get(`https://mims-backend-x0i3.onrender.com/bills?businessEmail=${encodeURIComponent(businessProfile.businessEmail)}`)
+      .then((res) => {
+        const sorted = res.data.sort((a, b) => new Date(b.billDate) - new Date(a.billDate));
         setBills(sorted);
         setFilteredBills(sorted);
-      }
-    }).catch((err) => console.error("Error fetching:", err));
-}, [businessProfile]);
+      })
+      .catch((err) => console.error("Error fetching:", err));
+  }, [businessProfile]);
 
   const handleSearchClick = () => {
     const filtered = bills.filter(bill =>
@@ -103,13 +103,13 @@ useEffect(() => {
   const handleDownloadInvoice = (bill) => {
     setSelectedBill(bill);
     setImagesLoaded(false);
-    
+
     const logo = new Image();
     logo.src = businessProfile?.businessLogo ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessLogo}` : "Please upload a logo";
 
     const stamp = new Image();
     stamp.src = businessProfile?.businessStamp ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessStamp}` : "Please upload a stamp";
-    
+
     Promise.all([
       new Promise(resolve => { logo.onload = resolve; }),
       new Promise(resolve => { stamp.onload = resolve; })
@@ -166,13 +166,22 @@ useEffect(() => {
 
   return (
     <AdminLayout>
-       <div className="text-sm text-gray-600 mb-4 dark:text-white">
-          <nav className="flex items-center space-x-2">
-            <Link to="/home"><MdOutlineHome fontSize={20} /></Link>
-            <span className="text-gray-400 dark:text-white">/</span>
-            <span className="font-semibold text-gray-800 dark:text-white">Orders</span>
-          </nav>
-        </div>
+
+      <Seo
+        title="Orders | easyinventory"
+        description="View and manage all customer orders in easyinventory. Download invoices, share via WhatsApp, and keep track of your business."
+        keywords="orders, invoices, billing, customer orders, easyinventory"
+        canonical="/orders"
+        url="https://easyinventory.online/orders"
+      />
+
+      <div className="text-sm text-gray-600 mb-4 dark:text-white">
+        <nav className="flex items-center space-x-2">
+          <Link to="/home"><MdOutlineHome fontSize={20} /></Link>
+          <span className="text-gray-400 dark:text-white">/</span>
+          <span className="font-semibold text-gray-800 dark:text-white">Orders</span>
+        </nav>
+      </div>
 
       <div className="p-6 min-h-screen bg-gray-50 dark:bg-gray-900 dark:text-white transition-colors">
         <div className="flex flex-col sm:flex-row justify-end items-center gap-4">
@@ -227,16 +236,16 @@ useEffect(() => {
         </div>
 
         <div className="flex justify-between items-center mt-6 dark:text-white">
-          <button 
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
-            disabled={currentPage === 1} 
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
             className="px-4 py-2 bg-gray-300 dark:bg-gray-700 dark:border dark:border-gray-600 rounded disabled:opacity-50 dark:text-white transition-colors">
             <span className="dark:text-white">Previous</span>
           </button>
           <span className="text-sm font-semibold dark:text-white">Page {currentPage} of {totalPages}</span>
-          <button 
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
-            disabled={currentPage === totalPages} 
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
             className="px-4 py-2 bg-gray-300 dark:bg-gray-700 dark:border dark:border-gray-600 rounded disabled:opacity-50 dark:text-white transition-colors">
             <span className="dark:text-white">Next</span>
           </button>
@@ -373,4 +382,7 @@ useEffect(() => {
 };
 
 export default Orders;
+
+
+
 

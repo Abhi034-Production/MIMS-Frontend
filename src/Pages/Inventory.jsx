@@ -6,8 +6,9 @@ import axios from "axios";
 import { ToastContainer, toast } from 'react-toastify';
 import { Link } from "react-router-dom";
 import { MdOutlineHome } from 'react-icons/md';
-import  Spinner from "../Components/Spinner"; 
-
+import Spinner from "../Components/Spinner";
+import { Helmet } from "react-helmet-async";
+import Seo from "../Components/Seo";
 
 const Inventory = () => {
   const { user } = useContext(AuthContext);
@@ -87,6 +88,15 @@ const Inventory = () => {
 
   return (
     <AdminLayout>
+
+      <Seo
+        title="Inventory | easyinventory"
+        description="Manage your inventory with ease on easyinventory. Add, edit, and delete products, update stock, and keep track of pricing."
+        keywords="inventory, product management, stock tracking, inventory system, easyinventory"
+        url="https://easyinventory.online/inventory"
+      />
+
+
       {/* Breadcrumbs */}
       <div className="text-sm text-gray-600 mb-4 dark:text-white">
         <nav className="flex items-center space-x-2 dark:text-white">
@@ -185,7 +195,7 @@ const Inventory = () => {
           {products.length === 0 ? (
             <>
               <Spinner />
-             
+
             </>
           ) : (
             <table className="w-full text-center text-[10px] xs:text-xs sm:text-sm md:text-base table-fixed break-words">

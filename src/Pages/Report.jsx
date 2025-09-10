@@ -23,6 +23,7 @@ import {
   endOfMonth,
   isValid,
 } from "date-fns";
+import { Helmet } from "react-helmet-async";
 
 const Report = () => {
   const [salesData, setSalesData] = useState([]);
@@ -191,11 +192,19 @@ const Report = () => {
     });
   };
 
- if (loading) return <AdminLayout><div className="text-center py-10"><Spinner /></div></AdminLayout>;
+  if (loading) return <AdminLayout><div className="text-center py-10"><Spinner /></div></AdminLayout>;
 
   return (
     <>
       <AdminLayout>
+
+        <Seo
+          title="Reports | easyinventory"
+          description="Generate and download sales reports, view top products, and monitor low stock inventory with easyinventory."
+          keywords="sales report, inventory report, top products, low stock, business reports, easyinventory"
+          url="https://easyinventory.online/reports"
+        />
+
         {/* Breadcrumbs */}
         <div className="text-sm text-gray-600 mb-4 dark:text-white">
           <nav className="flex items-center space-x-2">
@@ -254,7 +263,7 @@ const Report = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="monthLabel" className="dark:text-white" />
                     <YAxis className="dark:text-white" />
-                    <Tooltip className="dark:text-white"/>
+                    <Tooltip className="dark:text-white" />
                     <Bar dataKey="total" fill="#5990d7" className="dark:text-white" />
                   </BarChart>
                 </ResponsiveContainer>
@@ -372,7 +381,7 @@ const Report = () => {
                       })
                       .map((bill, index) => (
                         <tr key={index}>
-                          
+
                           <td className="py-2 text-center">{format(parseISO(bill.billDate), "dd MMM yyyy")}</td>
                           <td className="py-2 text-center">{bill.customer?.name || "N/A"}</td>
                           <td className="py-2 hidden">{bill.customer?.mobile || "N/A"}</td>
@@ -393,7 +402,7 @@ const Report = () => {
                 </table>
               </div>
             )}
-            
+
           {/* Orders Table (hidden for UI, shown in PDF)
         <div ref={ordersRef} className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6 mt-4 transition-colors">
           <h2 className="text-xl font-semibold mb-4">Orders for {selectedMonth}</h2>

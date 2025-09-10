@@ -7,6 +7,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import { Link } from "react-router-dom";
 import { MdOutlineHome } from 'react-icons/md';
 import  Spinner from "../../Components/Spinner"; 
+import Seo from "../../Components/Seo";
 
 
 const NewEntry = () => {
@@ -71,6 +72,14 @@ const NewEntry = () => {
 
   return (
     <AdminLayout>
+      
+      <Seo
+        title="New Inventory Entry | easyinventory"
+        description="Add a new inventory entry to your easyinventory system. Track dates, profit/loss, government charges, and trade details."
+        keywords="new inventory entry, add inventory, stock management, trade records, easyinventory"
+        url="https://easyinventory.online/inventory/new-entry"
+      />
+
       {/* Breadcrumbs */}
       <div className="text-sm text-gray-600 mb-4 dark:text-white">
         <nav className="flex items-center space-x-2 dark:text-white">

@@ -6,6 +6,8 @@ import axios from "axios";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { AuthContext } from "../Context/AuthContext";
 import Spinner from "./Spinner";
+import Seo from "./Seo";
+
 
 
 const Login = () => {
@@ -16,7 +18,7 @@ const Login = () => {
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
-  const [useOtp, setUseOtp] = useState(false); 
+  const [useOtp, setUseOtp] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
@@ -43,7 +45,7 @@ const Login = () => {
           email,
           password,
         });
-         if (res.data === "success" || (res.data && res.data.status === "success")) {
+        if (res.data === "success" || (res.data && res.data.status === "success")) {
           let userName = res.data && res.data.name;
           if (!userName) {
             try {
@@ -69,7 +71,7 @@ const Login = () => {
       }
     } catch (err) {
       toast.error(
-        err.response?.data?.message || 
+        err.response?.data?.message ||
         "Login failed. Please try again."
       );
     } finally {
@@ -102,133 +104,140 @@ const Login = () => {
         }
       } else {
         alert("OTP verification failed");
-        // toast.error(res.data.message || "OTP verification failed");
       }
     } catch (err) {
-     // toast.error("OTP verification failed");
-     alert("OTP verification failed");
+      alert("OTP verification failed");
     }
   };
 
   return (
-    <div className="h-screen flex items-center justify-center bg-gradient-to-br from-green-200 via-blue-100 to-purple-200 px-4 relative">
-      {/* Moving Circle Animation */}
-      {loading && (
-        <div className="absolute top-1/2 left-1/2 z-50" style={{ transform: 'translate(-50%, -50%)' }}>
-        <Spinner />
-        </div>
-      )}
-      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-2xl border border-gray-300">
-        <h1 className="text-center text-3xl sm:text-4xl font-extrabold text-gray-800 mb-6">
-          Login
-        </h1>
+    <>
+      <Seo
+        title="Login | easyinventory"
+        description="Login to your easyinventory account to manage your business inventory, track stock, and access exclusive features."
+        keywords="login, user login, account access, inventory login, easyinventory"
+        url="https://easyinventory.online/login"
+      />
 
-        {/* OTP Toggle */}
-        <div className="hidden justify-center mb-4">
-        <div className="flex  justify-center mb-4">
-          <span className="mr-2 text-sm text-gray-600">Use OTP Verification</span>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={useOtp}
-              onChange={() => setUseOtp(!useOtp)}
-              className="sr-only peer"
-            />
-            <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-          </label>
-        </div>
-        </div>
+      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-green-200 via-blue-100 to-purple-200 px-4 relative">
+        {/* Moving Circle Animation */}
+        {loading && (
+          <div className="absolute top-1/2 left-1/2 z-50" style={{ transform: 'translate(-50%, -50%)' }}>
+            <Spinner />
+          </div>
+        )}
+        <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-2xl border border-gray-300">
+          <h1 className="text-center text-3xl sm:text-4xl font-extrabold text-gray-800 mb-6">
+            Login
+          </h1>
 
-
-        {step === 1 ? (
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                placeholder="Enter email"
-                className="w-full h-12 px-4 border rounded-lg"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
-              <div className="relative">
+          {/* OTP Toggle */}
+          <div className="hidden justify-center mb-4">
+            <div className="flex  justify-center mb-4">
+              <span className="mr-2 text-sm text-gray-600">Use OTP Verification</span>
+              <label className="relative inline-flex items-center cursor-pointer">
                 <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter password"
-                  className="w-full h-12 px-4 pr-12 border rounded-lg"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  type="checkbox"
+                  checked={useOtp}
+                  onChange={() => setUseOtp(!useOtp)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+          </div>
+
+
+          {step === 1 ? (
+            <form onSubmit={handleLogin} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  placeholder="Enter email"
+                  className="w-full h-12 px-4 border rounded-lg"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
-                <span
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500 hover:text-gray-800"
-                >
-                  {showPassword ? <FaEyeSlash /> : <FaEye />}
-                </span>
               </div>
-            </div>
 
-            <button id="login-button"
-              type="submit"
-              className={`w-full h-12 bg-blue-600 hover:scale-105 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center relative ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-              disabled={loading}
-            >
-              {loading ? (
-                <span className="mr-2">Logging in</span>
-              ) : (
-                useOtp ? "Send OTP" : "Login"
-              )}
-            </button>
-          </form>
-        ) : (
-          useOtp && (
-            <div className="space-y-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Enter OTP sent to <b>{email}</b>
-              </label>
-              <input
-                type="text"
-                placeholder="Enter OTP"
-                className="w-full h-12 px-4 border rounded-lg"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                required
-              />
-              <button
-                onClick={verifyOtp}
-                className="w-full h-12 hover:scale-105 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter password"
+                    className="w-full h-12 px-4 pr-12 border rounded-lg"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <span
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500 hover:text-gray-800"
+                  >
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  </span>
+                </div>
+              </div>
+
+              <button id="login-button"
+                type="submit"
+                className={`w-full h-12 bg-blue-600 hover:scale-105 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center relative ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                disabled={loading}
               >
-                Verify OTP
+                {loading ? (
+                  <span className="mr-2">Logging in</span>
+                ) : (
+                  useOtp ? "Send OTP" : "Login"
+                )}
               </button>
-            </div>
-          )
-        )}
+            </form>
+          ) : (
+            useOtp && (
+              <div className="space-y-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Enter OTP sent to <b>{email}</b>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter OTP"
+                  className="w-full h-12 px-4 border rounded-lg"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  required
+                />
+                <button
+                  onClick={verifyOtp}
+                  className="w-full h-12 hover:scale-105 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                >
+                  Verify OTP
+                </button>
+              </div>
+            )
+          )}
 
-        <div className="text-center mt-6 text-sm text-gray-600">
-          <p>
-            Don't have an account?
-            <Link
-              to="/signup"
-              className="ml-2 text-blue-600 font-semibold hover:underline"
-            >
-              Signup
-            </Link>
-          </p>
+          <div className="text-center mt-6 text-sm text-gray-600">
+            <p>
+              Don't have an account?
+              <Link
+                to="/signup"
+                className="ml-2 text-blue-600 font-semibold hover:underline"
+              >
+                Signup
+              </Link>
+            </p>
+          </div>
+
+          <ToastContainer />
         </div>
-
-        <ToastContainer />
       </div>
-    </div>
+    </>
   );
 };
 

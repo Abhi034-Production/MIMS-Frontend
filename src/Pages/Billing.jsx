@@ -8,7 +8,8 @@ import { MdOutlineHome, MdFileDownload } from 'react-icons/md';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Spinner from "../Components/Spinner";
-
+import { Helmet } from "react-helmet-async";
+import Seo from "../Components/Seo";
 
 
 const Billing = () => {
@@ -28,7 +29,7 @@ const Billing = () => {
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const { user } = useContext(AuthContext);
   const [businessProfile, setBusinessProfile] = useState(null);
-
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user || !user.email) return;
@@ -53,18 +54,48 @@ const Billing = () => {
     setBillDate(now.toISOString().slice(0, 16));
   }, []);
 
+
+  // const fetchRecentBills = () => {
+  //   setLoading(true); // set before fetching
+  //   axios.get("https://mims-backend-x0i3.onrender.com/bills")
+  //     .then((res) => {
+  //       const sorted = res.data.sort((a, b) => new Date(b.billDate) - new Date(a.billDate));
+  //       setRecentBills(sorted.slice(0, 4));
+  //     })
+  //     .catch((err) => console.error("Error fetching recent bills:", err))
+  //     .finally(() => setLoading(false)); // stop loading after fetch
+  // };
+
   const fetchRecentBills = () => {
+    setLoading(true); // Start loading
     axios.get("https://mims-backend-x0i3.onrender.com/bills")
       .then((res) => {
         const sorted = res.data.sort((a, b) => new Date(b.billDate) - new Date(a.billDate));
         setRecentBills(sorted.slice(0, 4));
       })
-      .catch((err) => console.error("Error fetching recent bills:", err));
+      .catch((err) => console.error("Error fetching recent bills:", err))
+      .finally(() => setLoading(false)); // Stop loading
   };
 
   useEffect(() => {
     fetchRecentBills();
   }, []);
+
+
+  // const fetchRecentBills = () => {
+  //   axios.get("https://mims-backend-x0i3.onrender.com/bills")
+  //     .then((res) => {
+  //       setLoading(true);
+  //       const sorted = res.data.sort((a, b) => new Date(b.billDate) - new Date(a.billDate));
+  //       setRecentBills(sorted.slice(0, 4));
+  //     })
+  //     .catch((err) => console.error("Error fetching recent bills:", err)
+  //   );
+  // };
+
+  // useEffect(() => {
+  //   fetchRecentBills();
+  // }, []);
 
   const addToOrder = () => {
     const product = products.find((p) => p._id === selectedProductId);
@@ -269,8 +300,8 @@ const Billing = () => {
         totalPrice: item.totalPrice,
       })),
       total,
-    businessEmail: businessProfile?.businessEmail || ""
-  };
+      businessEmail: businessProfile?.businessEmail || ""
+    };
 
     try {
       await axios.post("https://mims-backend-x0i3.onrender.com/save-bill", billData);
@@ -295,6 +326,14 @@ const Billing = () => {
 
   return (
     <AdminLayout>
+
+      <Seo
+        title="Billing | easyinventory"
+        description="Manage and generate invoices, download PDFs, and share billing details with customers easily using easyinventory."
+        keywords="billing, invoices, invoice pdf, share invoice, easyinventory"
+        url="https://easyinventory.online/billing"
+      />
+
       <div className="text-sm text-gray-600 mb-4 dark:text-white">
         <nav className="flex items-center space-x-2 dark:text-white">
           <Link to='/home'><MdOutlineHome fontSize={20} /></Link>
@@ -305,8 +344,8 @@ const Billing = () => {
 
       <div className="p-4 md:p-6 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
         {/* Customer Form */}
-           <input type="hidden" name="businessEmail" value={businessProfile?.businessEmail || ''} readOnly />
-          
+        <input type="hidden" name="businessEmail" value={businessProfile?.businessEmail || ''} readOnly />
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6 transition-colors">
           {['name', 'mobile', 'email'].map((field, idx) => (
             <div key={idx}>
@@ -345,7 +384,7 @@ const Billing = () => {
                     </option>
                   ))}
               </select>
-             </div>
+            </div>
             {/* Quantity */}
             <div className="w-full md:w-40">
               <label className="block text-sm font-medium text-gray-600 dark:text-white mb-1">Quantity:</label>
@@ -379,8 +418,8 @@ const Billing = () => {
                   type="button"
                   onClick={() => setEditPriceMode(!editPriceMode)}
                   className={`h-12 px-4 rounded-md text-sm font-medium transition-colors flex-shrink-0 ${editPriceMode
-                      ? 'bg-green-600 text-white hover:bg-green-700'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600'
+                    ? 'bg-green-600 text-white hover:bg-green-700'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600'
                     }`}
                 >
                   {editPriceMode ? 'Editing' : 'Edit'}
@@ -425,37 +464,37 @@ const Billing = () => {
 
         {/* Order Table */}
         {order.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-2 mb-6 sm:p-0 transition-colors">
-          <table className="w-full text-center text-[10px] xs:text-xs sm:text-sm md:text-base table-fixed break-words">
-            <thead className="bg-gray-100 dark:bg-gray-700">
-              <tr>
-                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Product Name</th>
-                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Price</th>
-                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Quantity</th>
-                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Total</th>
-                <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="dark:text-white">
-              {order.map(item => (
-                <tr key={item._id} className="border-b">
-                  <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">{item.name}</td>
-                  <td className="py-1 px-1 sm:px-2 text-blue-600 font-semibold whitespace-normal break-words">₹{item.price.toFixed(2)}</td>
-                  <td className="py-1 px-1 sm:px-2 whitespace-normal break-words">{item.orderQuantity}</td>
-                  <td className="py-1 px-1 sm:px-2 whitespace-normal break-words">₹{item.totalPrice.toFixed(2)}</td>
-                  <td className="py-2">
-                    <button
-                      onClick={() => removeFromOrder(item._id)}
-                      className="bg-red-500 hover:bg-red-600 py-1 px-1 sm:px-2 whitespace-normal break-words"
-                    >
-                      Remove
-                    </button>
-                  </td>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-2 mb-6 sm:p-0 transition-colors">
+            <table className="w-full text-center text-[10px] xs:text-xs sm:text-sm md:text-base table-fixed break-words">
+              <thead className="bg-gray-100 dark:bg-gray-700">
+                <tr>
+                  <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Product Name</th>
+                  <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Price</th>
+                  <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Quantity</th>
+                  <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Total</th>
+                  <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="dark:text-white">
+                {order.map(item => (
+                  <tr key={item._id} className="border-b">
+                    <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">{item.name}</td>
+                    <td className="py-1 px-1 sm:px-2 text-blue-600 font-semibold whitespace-normal break-words">₹{item.price.toFixed(2)}</td>
+                    <td className="py-1 px-1 sm:px-2 whitespace-normal break-words">{item.orderQuantity}</td>
+                    <td className="py-1 px-1 sm:px-2 whitespace-normal break-words">₹{item.totalPrice.toFixed(2)}</td>
+                    <td className="py-2">
+                      <button
+                        onClick={() => removeFromOrder(item._id)}
+                        className="bg-red-500 hover:bg-red-600 py-1 px-1 sm:px-2 whitespace-normal break-words"
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {/* Save Button */}
@@ -477,55 +516,82 @@ const Billing = () => {
         )}
 
         {/* Recent Orders Table */}
-        {recentBills.length === 0 ? (
+
+        {loading ? (
           <div className="flex justify-center items-center py-10">
             <Spinner />
-            <span className="ml-2 text-gray-500 dark:text-gray-300 hidden">Loading... (wait 10 seconds for more data)</span>
           </div>
+        ) : recentBills.length === 0 ? (
+          <div className="flex justify-center items-center py-10">
+            <span className="text-gray-500 dark:text-gray-300">No recent bills found</span>
+          </div>
+
         ) : (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-2 mb-6 sm:p-0 transition-colors">
             <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Recent Orders</h2>
-            <table className="w-full text-center text-[10px] xs:text-xs sm:text-sm md:text-base table-fixed break-words">
-              <thead className="bg-gray-100 dark:bg-gray-700 dark:text-white">
-                <tr>
-                  <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Customer Name</th>
-                  <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Products</th>
-                  <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Total Price</th>
-                  <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Date</th>
-                  <th className="px-1 py-2 sm:px-2 sm:py-4 dark:text-white whitespace-normal">Invoice</th>
-                </tr>
-              </thead>
-              <tbody className="dark:text-white">
-                {recentBills
-                  .filter(bill =>
-                    businessProfile && businessProfile.businessEmail
-                      ? bill.businessEmail === businessProfile.businessEmail
-                      : true
-                  )
-                  .map((bill) => (
-                    <tr key={bill._id} className="border-b">
-                      <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">{bill.customer.name}</td>
-                      <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">
-                        <ul className="list-decimal pl-4">
-                          {bill.order.map((item, i) => (
-                            <li key={i} className="dark:text-white">{item.productName} (x{item.quantity}) - ₹{item.price}</li>
-                          ))}
-                        </ul>
-                      </td>
-                      <td className="py-1 px-1 sm:px-2 text-blue-600 font-semibold whitespace-normal break-words">₹{bill.total}</td>
-                      <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">{new Date(bill.billDate).toLocaleString()}</td>
-                      <td className="py-1 px-1 sm:px-2 capitalize whitespace-normal break-words">
-                        <button onClick={() => handleDownloadInvoice(bill)}>
-                          <MdFileDownload className="text-blue-600 text-xl" />
-                        </button>
-                      </td>
+
+            <div className="overflow-x-auto">
+              {recentBills.length === 0 ? (
+                <div className="flex justify-center items-center py-10">
+                  <Spinner />
+                  <span className="ml-2 text-gray-500 dark:text-gray-300">
+
+                  </span>
+                </div>
+              ) : (
+                <table className="w-full text-center text-[10px] xs:text-xs sm:text-sm md:text-base table-fixed break-words">
+                  <thead className="bg-gray-100 dark:bg-gray-700 dark:text-white">
+                    <tr>
+                      <th className="px-1 py-2 sm:px-2 sm:py-4">Customer Name</th>
+                      <th className="px-1 py-2 sm:px-2 sm:py-4">Products</th>
+                      <th className="px-1 py-2 sm:px-2 sm:py-4">Total Price</th>
+                      <th className="px-1 py-2 sm:px-2 sm:py-4">Date</th>
+                      <th className="px-1 py-2 sm:px-2 sm:py-4">Invoice</th>
                     </tr>
-                  ))}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody className="dark:text-white">
+                    {recentBills
+                      .filter((bill) =>
+                        businessProfile && businessProfile.businessEmail
+                          ? bill.businessEmail === businessProfile.businessEmail
+                          : true
+                      )
+                      .map((bill) => (
+                        <tr key={bill._id} className="border-b">
+                          <td className="py-1 px-1 sm:px-2 capitalize">
+                            {bill.customer.name}
+                          </td>
+                          <td className="py-1 px-1 sm:px-2 capitalize">
+                            <ul className="list-decimal pl-4">
+                              {bill.order.map((item, i) => (
+                                <li key={i}>
+                                  {item.productName} (x{item.quantity}) - ₹{item.price}
+                                </li>
+                              ))}
+                            </ul>
+                          </td>
+                          <td className="py-1 px-1 sm:px-2 text-blue-600 font-semibold">
+                            ₹{bill.total}
+                          </td>
+                          <td className="py-1 px-1 sm:px-2">
+                            {new Date(bill.billDate).toLocaleString()}
+                          </td>
+                          <td className="py-1 px-1 sm:px-2">
+                            <button onClick={() => handleDownloadInvoice(bill)}>
+                              <MdFileDownload className="text-blue-600 text-xl" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
           </div>
         )}
-     
+
+
         {(showPreview || selectedBill) && selectedBill && (
           <div className="fixed w-1/2 inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
             <div className="bg-white text-black p-4 rounded shadow-lg w-full max-w-[850px] max-h-[90vh] overflow-auto">

@@ -13,6 +13,8 @@ import {
 } from "react-icons/md";
 import { format, parseISO } from "date-fns";
 import { jsPDF } from "jspdf";
+import { Helmet } from "react-helmet-async";
+import Seo from "../Components/Seo";
 
 
 const AdminDashboard = () => {
@@ -28,23 +30,21 @@ const AdminDashboard = () => {
   const [monthlyTarget, setMonthlyTarget] = useState(50000);
   const [achievementBadges, setAchievementBadges] = useState([]);
   const [lowStock, setLowStock] = useState([]);
-
   const { user } = useContext(AuthContext);
   const [businessProfile, setBusinessProfile] = useState(null);
 
 
-  
-    const downloadLowStockPDF = () => {
-      const doc = new jsPDF();
-      doc.text("Low Stock Inventory Report", 14, 15);
-      autoTable(doc, {
-        startY: 25,
-        head: [["Product Name", "Quantity", "Price"]],
-        body: lowStock.map(item => [item.name, item.quantity, `₹${item.price}`]),
-      });
-      doc.save("low_stock_inventory.pdf");
-    };
-  
+  const downloadLowStockPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Low Stock Inventory Report", 14, 15);
+    autoTable(doc, {
+      startY: 25,
+      head: [["Product Name", "Quantity", "Price"]],
+      body: lowStock.map(item => [item.name, item.quantity, `₹${item.price}`]),
+    });
+    doc.save("low_stock_inventory.pdf");
+  };
+
 
   useEffect(() => {
     if (!user || !user.email) return;
@@ -55,7 +55,7 @@ const AdminDashboard = () => {
           setBusinessProfile(data.profile);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [user]);
 
   useEffect(() => {
@@ -95,7 +95,7 @@ const AdminDashboard = () => {
             // Handle both item structures
             const productName = item.product?.name || item.productName;
             const quantity = item.quantity;
-            
+
             if (productName) {
               if (productSales[productName]) {
                 productSales[productName] += quantity;
@@ -130,6 +130,14 @@ const AdminDashboard = () => {
 
   return (
     <AdminLayout>
+
+      <Seo
+        title="Dashboard | easyinventory"
+        description="Monitor revenue, track orders, view top-selling products, and manage inventory from the easyinventory Admin Dashboard."
+        keywords=" dashboard, inventory analytics, sales tracking, easyinventory"
+        url="https://easyinventory.online/admin-dashboard"
+      />
+
       <div className="text-sm dark:text-white text-gray-600 mb-4">
         <nav className="flex items-center space-x-2">
           <span className="text-gray-500 dark:text-white"><Link to="/home"><MdOutlineHome fontSize={20} /></Link></span>
@@ -253,40 +261,40 @@ const AdminDashboard = () => {
         </div> */}
 
 
-        
-        
-                  {/* ✅ Low Stock Section */}
-                  <div className="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow hover:shadow-lg transition duration-300 mt-8">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <MdInventory className="text-2xl text-red-600" />
-                        <h2 className="text-lg font-semibold text-gray-700 dark:text-white">Low Stock Inventory (Less than 5)</h2>
-                      </div>
-                      {lowStock.length > 0 && (
-                        <button
-                          onClick={downloadLowStockPDF}
-                          className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md text-sm"
-                        >
-                          📄 Download PDF
-                        </button>
-                      )}
-                    </div>
-        
-                    {lowStock.length > 0 ? (
-                      <ul className="divide-y divide-gray-200">
-                        {lowStock.map((product, index) => (
-                          <li key={index} className="flex justify-between py-3 text-gray-700 dark:text-white">
-                            <span>{product.name}</span>
-                            <span className="text-sm">Qty: {product.quantity} | ₹{product.price}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-sm text-gray-500 dark:text-white">All inventory is sufficiently stocked.</p>
-                    )}
-                  </div>
-        
-        
+
+
+        {/* ✅ Low Stock Section */}
+        <div className="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow hover:shadow-lg transition duration-300 mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <MdInventory className="text-2xl text-red-600" />
+              <h2 className="text-lg font-semibold text-gray-700 dark:text-white">Low Stock Inventory (Less than 5)</h2>
+            </div>
+            {lowStock.length > 0 && (
+              <button
+                onClick={downloadLowStockPDF}
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md text-sm"
+              >
+                📄 Download PDF
+              </button>
+            )}
+          </div>
+
+          {lowStock.length > 0 ? (
+            <ul className="divide-y divide-gray-200">
+              {lowStock.map((product, index) => (
+                <li key={index} className="flex justify-between py-3 text-gray-700 dark:text-white">
+                  <span>{product.name}</span>
+                  <span className="text-sm">Qty: {product.quantity} | ₹{product.price}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-500 dark:text-white">All inventory is sufficiently stocked.</p>
+          )}
+        </div>
+
+
       </div>
     </AdminLayout>
   );

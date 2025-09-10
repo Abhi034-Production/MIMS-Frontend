@@ -41,7 +41,7 @@ const AdminLayout = ({ children }) => {
                 setBusinessName("");
                 setBusinessCategory("");
             });
-     
+
         const cat = localStorage.getItem("businessCategory");
         if (cat) setBusinessCategory(cat);
     }, [user]);
@@ -53,9 +53,10 @@ const AdminLayout = ({ children }) => {
     // Custom sidebar for Share Market Trade Management
     const ShareMarketSidebar = (
         <ul className="w-full flex-1">
-            <h1 className="text-xl p-1 mb-1 text-white font-semibold">
-                <img src="https://i.ibb.co/MkqjQ2cG/logo.png" />
-            </h1>
+             <h1 className="text-2xl sm:text-xl md:text-2xl lg:text-3xl font-bold p-1 mb-1  bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500  bg-clip-text text-transparent   dark:from-blue-400 dark:via-purple-400 dark:to-pink-400 tracking-tight"
+                                >
+                                    easyinventory
+                                </h1>
             <hr className="mb-3 p-2" />
             <li className="w-full ">
                 <Link to="/portfolio" className={`p-2 flex items-center rounded-lg text-lg mb-2 font-semibold transition-colors duration-300 ${location.pathname === "/home" ? "bg-[#5990d7] text-white dark:bg-blue-900 dark:text-white" : "hover:bg-blue-300 hover:text-white dark:hover:bg-blue-900"}`} onClick={() => setIsNavOpen(false)}>
@@ -74,7 +75,7 @@ const AdminLayout = ({ children }) => {
                 </Link>
             </li>
 
-              <li className="w-full">
+            <li className="w-full">
                 <Link to="/my-trades" className={`p-2 flex items-center rounded-lg text-lg mb-2 font-semibold transition-colors duration-300 ${location.pathname === "/home" ? "bg-[#5990d7] text-white dark:bg-blue-900 dark:text-white" : "hover:bg-blue-300 hover:text-white dark:hover:bg-blue-900"}`} onClick={() => setIsNavOpen(false)}>
                     <p className="flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 w-full">
                         <span className="text-2xl text-white"><MdDashboard /></span>
@@ -83,7 +84,7 @@ const AdminLayout = ({ children }) => {
                 </Link>
             </li>
 
-          
+
             {/* <li className="w-full">
                 <Link to="/portfolio" className={`p-2 flex items-center rounded-lg text-lg mb-2 font-semibold transition-colors duration-300 ${location.pathname === "/portfolio" ? "bg-[#5990d7] text-white dark:bg-blue-900 dark:text-white" : "hover:bg-blue-300 hover:text-white dark:hover:bg-blue-900"}`} onClick={() => setIsNavOpen(false)}>
                     <p className="flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 w-full">
@@ -141,9 +142,12 @@ const AdminLayout = ({ children }) => {
                             ShareMarketSidebar
                         ) : (
                             <ul className="w-full flex-1">
-                                <h1 className="text-xl p-1 mb-1 text-white font-semibold">
-                                    <img src="https://i.ibb.co/MkqjQ2cG/logo.png" />
+                                <h1 className="text-2xl sm:text-xl md:text-2xl lg:text-3xl font-bold p-1 mb-1  bg-gradient-to-r from-blue-500 via-purple-500 to-pink-50 bg-clip-text text-transparent  dark:from-blue-400 dark:via-purple-400 dark:to-pink-400 tracking-tight"
+                                >
+                                    easyinventory
                                 </h1>
+
+
 
                                 <hr className="mb-3 p-2" />
                                 {Nav_Links.map((item, index) => (
@@ -209,8 +213,10 @@ const AdminLayout = ({ children }) => {
                         {/* Footer - Fixed to bottom of content area */}
                         <div className="p-4 flex items-center justify-center gap-2 text-sm text-gray-600 dark:text-white mt-4">
                             <span>Powered by</span>
-                            <img className="w-20 h-20 object-contain" src="https://i.ibb.co/MkqjQ2cG/logo.png" alt="Logo" />
-                        </div>
+                              <h1  className="text-xl  font-bold p-1 mb-1   bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500  bg-clip-text text-transparent  dark:from-blue-400 dark:via-purple-400 dark:to-pink-400 tracking-tight" >
+                                    easyinventory
+                                </h1>
+                              </div>
                     </div>
                 </main>
             </div>

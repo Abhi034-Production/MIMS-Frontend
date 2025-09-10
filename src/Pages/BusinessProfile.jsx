@@ -1,6 +1,8 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../Context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
+import Seo from "../Components/Seo";
 
 const initialState = {
   businessName: "",
@@ -15,23 +17,7 @@ const initialState = {
 const categories = [
   "Retail Shop",
   "Wholesale Shop",
-  "Service",
-  "Agriculture Shop",
   "Share Market Trade Management",
-  "Manufacturing",
-  "Transport",
-  "Food and Beverage",
-  "Healthcare",
-  "Education",
-  "Real Estate",
-  "IT Services",
-  "Finance",
-  "Consulting",
-  "Entertainment",
-  "Travel and Tourism",
-  "Construction",
-  "Automotive",
-  "Logistics",
   "Other",
 ];
 
@@ -104,123 +90,133 @@ const BusinessProfile = () => {
   };
 
   return (
-    <div className="max-w-xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-lg shadow mt-10">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white text-center">
-        Business Profile
-      </h2>
+    <>
 
-      {message && (
-        <p className={`mb-4 text-center ${message.includes("✅") ? "text-green-600" : "text-red-600"}`}>
-          {message}
-        </p>
-      )}
+      <Seo
+        title="Business Profile | easyinventory"
+        description="Create and manage your business profile on easyinventory. Add your business name, address, email, mobile, logo, and stamp for better billing and management."
+        keywords="business profile, business details, business logo, business stamp, business setup, easyinventory"
+        url="https://easyinventory.online/business-profile"
+      />
 
-      <form onSubmit={handleSubmit} className="space-y-4" encType="multipart/form-data">
-        <div>
-          <label className="block text-gray-700 dark:text-white mb-1">Business Name</label>
-          <input
-            type="text"
-            name="businessName"
-            value={form.businessName}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-900 dark:text-white"
-          />
-        </div>
 
-        <div>
-          <label className="block text-gray-700 dark:text-white mb-1">Business Mobile Number</label>
-          <input
-            type="tel"
-            name="businessMobile"
-            value={form.businessMobile}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-900 dark:text-white"
-          />
-        </div>
+      <div className="max-w-xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-lg shadow mt-10">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white text-center">
+          Business Profile
+        </h2>
 
-        <div>
-          <label className="block text-gray-700 dark:text-white mb-1">Business Address</label>
-          <input
-            type="text"
-            name="businessAddress"
-            value={form.businessAddress}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-900 dark:text-white"
-          />
-        </div>
+        {message && (
+          <p className={`mb-4 text-center ${message.includes("✅") ? "text-green-600" : "text-red-600"}`}>
+            {message}
+          </p>
+        )}
 
-        <div>
-          <label className="block text-gray-700 dark:text-white mb-1">Business Email</label>
-          <input
-            type="email"
-            name="businessEmail"
-            value={form.businessEmail}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-900 dark:text-white"
-          />
-        </div>
+        <form onSubmit={handleSubmit} className="space-y-4" encType="multipart/form-data">
+          <div>
+            <label className="block text-gray-700 dark:text-white mb-1">Business Name</label>
+            <input
+              type="text"
+              name="businessName"
+              value={form.businessName}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-900 dark:text-white"
+            />
+          </div>
 
-        <div>
-          <label className="block text-gray-700 dark:text-white mb-1">Business Logo</label>
-          <input
-            type="file"
-            name="businessLogo"
-            accept="image/*"
-            onChange={handleChange}
-            className="w-full text-gray-700 dark:text-white"
-          />
-          {logoPreview && (
-            <img src={logoPreview} alt="Logo Preview" className="h-16 mt-2 rounded" />
-          )}
-        </div>
+          <div>
+            <label className="block text-gray-700 dark:text-white mb-1">Business Mobile Number</label>
+            <input
+              type="tel"
+              name="businessMobile"
+              value={form.businessMobile}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-900 dark:text-white"
+            />
+          </div>
 
-        <div>
-          <label className="block text-gray-700 dark:text-white mb-1">Business Stamp/Sign</label>
-          <input
-            type="file"
-            name="businessStamp"
-            accept="image/*"
-            onChange={handleChange}
-            className="w-full text-gray-700 dark:text-white"
-          />
-          {stampPreview && (
-            <img src={stampPreview} alt="Stamp Preview" className="h-16 mt-2 rounded" />
-          )}
-        </div>
+          <div>
+            <label className="block text-gray-700 dark:text-white mb-1">Business Address</label>
+            <input
+              type="text"
+              name="businessAddress"
+              value={form.businessAddress}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-900 dark:text-white"
+            />
+          </div>
 
-        <div>
-          <label className="block text-gray-700 dark:text-white mb-1">Business Category</label>
-          <select
-            name="businessCategory"
-            value={form.businessCategory}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-900 dark:text-white"
+          <div>
+            <label className="block text-gray-700 dark:text-white mb-1">Business Email</label>
+            <input
+              type="email"
+              name="businessEmail"
+              value={form.businessEmail}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-900 dark:text-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-700 dark:text-white mb-1">Business Logo</label>
+            <input
+              type="file"
+              name="businessLogo"
+              accept="image/*"
+              onChange={handleChange}
+              className="w-full text-gray-700 dark:text-white"
+            />
+            {logoPreview && (
+              <img src={logoPreview} alt="Logo Preview" className="h-16 mt-2 rounded" />
+            )}
+          </div>
+
+          <div>
+            <label className="block text-gray-700 dark:text-white mb-1">Business Stamp/Sign</label>
+            <input
+              type="file"
+              name="businessStamp"
+              accept="image/*"
+              onChange={handleChange}
+              className="w-full text-gray-700 dark:text-white"
+            />
+            {stampPreview && (
+              <img src={stampPreview} alt="Stamp Preview" className="h-16 mt-2 rounded" />
+            )}
+          </div>
+
+          <div>
+            <label className="block text-gray-700 dark:text-white mb-1">Business Category</label>
+            <select
+              name="businessCategory"
+              value={form.businessCategory}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-900 dark:text-white"
+            >
+              <option value="">Select Category</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full ${loading ? "bg-blue-300" : "bg-blue-600 hover:bg-blue-700"
+              } text-white font-semibold py-2 rounded transition-colors`}
           >
-            <option value="">Select Category</option>
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full ${
-            loading ? "bg-blue-300" : "bg-blue-600 hover:bg-blue-700"
-          } text-white font-semibold py-2 rounded transition-colors`}
-        >
-          {loading ? "Saving..." : "Save Business Profile"}
-        </button>
-      </form>
-    </div>
+            {loading ? "Saving..." : "Save Business Profile"}
+          </button>
+        </form>
+      </div>
+    </>
   );
 };
 

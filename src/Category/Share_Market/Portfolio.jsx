@@ -19,6 +19,7 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Title, Tooltip, Legend);
 
+
 const Portfolio = () => {
   const { user } = useContext(AuthContext);
   const { theme } = useContext(ThemeContext);
@@ -92,7 +93,7 @@ const Portfolio = () => {
     },
   };
 
-  // ...existing code...
+  
 
   const lineOptions = {
     plugins: {
@@ -107,6 +108,14 @@ const Portfolio = () => {
 
   return (
     <AdminLayout>
+
+      <Seo
+        title="Portfolio | easyinventory"
+        description="Track and analyze your stock market portfolio with easyinventory. View profit/loss trends, best trading days, and key statistics."   
+        keywords="stock portfolio, trading analysis, profit loss, stock market, easyinventory"
+        url="https://easyinventory.online/portfolio"
+      />
+
       <div
         className={`max-w-6xl mx-auto p-4 grid gap-6 md:grid-cols-2 lg:grid-cols-3 ${theme === "dark" ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"}`}
       >

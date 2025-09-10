@@ -1,6 +1,8 @@
 import React from 'react'
 import { Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { HelmetProvider } from "react-helmet-async";
+
 import NotFound from './Components/NotFound'
 import Login from './Components/Login'
 import Signup from './Components/Signup'
@@ -26,6 +28,7 @@ const Settings = lazy(() => import('./Pages/Settings'))
 
 function App() {
   return (
+   <HelmetProvider>
     <ThemeProvider>
       <BrowserRouter>
         <Suspense fallback={<Loading />}>
@@ -56,6 +59,7 @@ function App() {
         </Suspense>
       </BrowserRouter>
     </ThemeProvider>
+    </HelmetProvider>
   )
 }
 

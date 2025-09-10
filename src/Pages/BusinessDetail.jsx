@@ -4,7 +4,8 @@ import { AuthContext } from "../Context/AuthContext";
 import { Link } from "react-router-dom";
 import { MdOutlineHome, MdFileDownload } from 'react-icons/md';
 import Spinner from '../Components/Spinner'
-
+import { Helmet } from "react-helmet-async";
+import Seo from "../Components/Seo";
 
 const BusinessDetail = () => {
   const { user } = useContext(AuthContext);
@@ -32,7 +33,7 @@ const BusinessDetail = () => {
       .catch(() => setLoading(false));
   }, [user]);
 
-  
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -92,7 +93,16 @@ const BusinessDetail = () => {
 
   return (
     <AdminLayout>
-        <div className="text-sm text-gray-600 mb-4 dark:text-white">
+
+      <Seo
+        title="Business Details | easyinventory"
+        description="View and update your business profile including name, contact info, logo, and stamp on easyinventory."
+        keywords="business profile, business details, company logo, business stamp, easyinventory"
+        url="https://easyinventory.online/business-details"
+      />
+
+
+      <div className="text-sm text-gray-600 mb-4 dark:text-white">
         <nav className="flex items-center space-x-2 dark:text-white">
           <Link to='/home'><MdOutlineHome fontSize={20} /></Link>
           <span className="text-gray-400 dark:text-white">/</span>
@@ -181,8 +191,26 @@ const BusinessDetail = () => {
               <button type="button" onClick={handleEdit} className="bg-blue-600 hidden text-white font-bold py-2 px-8 sm:py-2.5 sm:px-12 rounded-xl shadow text-base sm:text-lg transition-all">Edit</button>
             )}
           </div>
-          
         </form>
+      </div>
+
+      <div className="w-full mx-auto bg-white dark:bg-gray-900 p-6 sm:p-8 md:p-10 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 mt-10">
+        {/* Active User Card Template with Time and Info */}
+        {user && (
+          <div className="flex items-center gap-4 p-4 bg-blue-50 dark:bg-blue-900 rounded-xl shadow border border-blue-200 dark:border-blue-700">
+            <div className="flex-shrink-0 h-12 w-12 rounded-full bg-blue-300 dark:bg-blue-700 flex items-center justify-center text-white text-xl font-bold">
+              {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <div className="text-lg font-semibold text-gray-800 dark:text-white">{user.name || "Active User"}</div>
+              <div className="text-base text-gray-600 dark:text-gray-300">{user.email}</div>
+
+              {user.role && (
+                <div className="text-sm text-gray-500 dark:text-gray-400">Role: User</div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );
