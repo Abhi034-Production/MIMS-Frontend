@@ -33,7 +33,7 @@ const Billing = () => {
 
   useEffect(() => {
     if (!user || !user.email) return;
-    fetch(`http://localhost:3001/business-profile/${user.email}`)
+    fetch(`https://mims-backend-x0i3.onrender.com/business-profile/${user.email}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.status === "success") {
@@ -44,7 +44,7 @@ const Billing = () => {
   }, [user]);
 
   useEffect(() => {
-    axios.get("http://localhost:3001/products")
+    axios.get("https://mims-backend-x0i3.onrender.com/products")
       .then((res) => setProducts(res.data))
       .catch((err) => console.error("Error fetching products:", err));
   }, []);
@@ -57,7 +57,7 @@ const Billing = () => {
 
   // const fetchRecentBills = () => {
   //   setLoading(true); // set before fetching
-  //   axios.get("http://localhost:3001/bills")
+  //   axios.get("https://mims-backend-x0i3.onrender.com/bills")
   //     .then((res) => {
   //       const sorted = res.data.sort((a, b) => new Date(b.billDate) - new Date(a.billDate));
   //       setRecentBills(sorted.slice(0, 4));
@@ -68,7 +68,7 @@ const Billing = () => {
 
   const fetchRecentBills = () => {
     setLoading(true); // Start loading
-    axios.get("http://localhost:3001/bills")
+    axios.get("https://mims-backend-x0i3.onrender.com/bills")
       .then((res) => {
         const sorted = res.data.sort((a, b) => new Date(b.billDate) - new Date(a.billDate));
         setRecentBills(sorted.slice(0, 4));
@@ -83,7 +83,7 @@ const Billing = () => {
 
 
   // const fetchRecentBills = () => {
-  //   axios.get("http://localhost:3001/bills")
+  //   axios.get("https://mims-backend-x0i3.onrender.com/bills")
   //     .then((res) => {
   //       setLoading(true);
   //       const sorted = res.data.sort((a, b) => new Date(b.billDate) - new Date(a.billDate));
@@ -155,9 +155,9 @@ const Billing = () => {
     setSelectedBill(bill);
     setImagesLoaded(false);
     const logo = new window.Image();
-    logo.src = businessProfile?.businessLogo ? `http://localhost:3001${businessProfile.businessLogo}` : "";
+    logo.src = businessProfile?.businessLogo ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessLogo}` : "";
     const stamp = new window.Image();
-    stamp.src = businessProfile?.businessStamp ? `http://localhost:3001${businessProfile.businessStamp}` : "";
+    stamp.src = businessProfile?.businessStamp ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessStamp}` : "";
     Promise.all([
       new Promise(resolve => { logo.onload = resolve; }),
       new Promise(resolve => { stamp.onload = resolve; })
@@ -304,7 +304,7 @@ const Billing = () => {
     };
 
     try {
-      await axios.post("http://localhost:3001/save-bill", billData);
+      await axios.post("https://mims-backend-x0i3.onrender.com/save-bill", billData);
       toast.success("Bill Saved Successfully!");
       setCustomer({ name: "", mobile: "91", email: "" });
       setOrder([]);
@@ -685,7 +685,7 @@ const Billing = () => {
                       <div className="w-3/12 flex items-center">
                         <img
                           className="block m-auto -top-4 w-full h-full"
-                          src={businessProfile?.businessLogo ? `http://localhost:3001${businessProfile.businessLogo}` : "Please upload your business logo"}
+                          src={businessProfile?.businessLogo ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessLogo}` : "Please upload your business logo"}
                           alt="Business Logo"
                         />
                       </div>
@@ -756,7 +756,7 @@ const Billing = () => {
                     <div className="stamp">
                       <img
                         className="w-24 h-24 md:w-32 md:h-32 object-contain"
-                        src={businessProfile?.businessStamp ? `http://localhost:3001${businessProfile.businessStamp}` : "Please upload your business stamp"}
+                        src={businessProfile?.businessStamp ? `https://mims-backend-x0i3.onrender.com${businessProfile.businessStamp}` : "Please upload your business stamp"}
                         alt="Shop Stamp"
                       />
                     </div>

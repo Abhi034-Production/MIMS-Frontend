@@ -26,8 +26,8 @@ const Orders = lazy(() => import('./Pages/Orders'))
 const Report = lazy(() => import('./Pages/Report'))
 const Settings = lazy(() => import('./Pages/Settings'))
 
-//    http://localhost:3001
-//    http://localhost:3001
+//    https://mims-backend-x0i3.onrender.com
+//    https://mims-backend-x0i3.onrender.com
 
 
 function App() {

@@ -30,7 +30,7 @@ const Login = () => {
     setLoading(true);
     try {
       if (useOtp) {
-        const res = await axios.post(`http://localhost:3001/login-with-otp`, {
+        const res = await axios.post(`https://mims-backend-x0i3.onrender.com/login-with-otp`, {
           email,
           password,
         });
@@ -41,7 +41,7 @@ const Login = () => {
           toast.error("Invalid email or password");
         }
       } else {
-        const res = await axios.post(`http://localhost:3001/login`, {
+        const res = await axios.post(`https://mims-backend-x0i3.onrender.com/login`, {
           email,
           password,
         });
@@ -49,7 +49,7 @@ const Login = () => {
           let userName = res.data && res.data.name;
           if (!userName) {
             try {
-              const userRes = await axios.post(`http://localhost:3001/get-user`, { email });
+              const userRes = await axios.post(`https://mims-backend-x0i3.onrender.com/get-user`, { email });
               userName = userRes.data.name;
             } catch {
               userName = email;
@@ -57,7 +57,7 @@ const Login = () => {
           }
           login({ email, name: userName });
           toast.success("Login successful");
-          const checkProfile = await axios.get(`http://localhost:3001/business-profile/${email}`, {
+          const checkProfile = await axios.get(`https://mims-backend-x0i3.onrender.com/business-profile/${email}`, {
             validateStatus: (status) => status === 200 || status === 404
           });
           if (checkProfile.status === 200 && checkProfile.data.status === "success") {
@@ -86,7 +86,7 @@ const Login = () => {
     }
 
     try {
-      const res = await axios.post(`http://localhost:3001/verify-login-otp`, {
+      const res = await axios.post(`https://mims-backend-x0i3.onrender.com/verify-login-otp`, {
         email,
         otp,
       });
@@ -94,7 +94,7 @@ const Login = () => {
       if (res.data.status === "success") {
         login({ email, name: res.data.name });
         // toast.success("Login successful");
-        const checkProfile = await axios.get(`http://localhost:3001/business-profile/${email}`, {
+        const checkProfile = await axios.get(`https://mims-backend-x0i3.onrender.com/business-profile/${email}`, {
           validateStatus: (status) => status === 200 || status === 404
         });
         if (checkProfile.status === 200 && checkProfile.data.status === "success") {

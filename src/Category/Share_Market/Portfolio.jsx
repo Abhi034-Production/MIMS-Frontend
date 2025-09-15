@@ -30,7 +30,7 @@ const Portfolio = () => {
   useEffect(() => {
     if (!user?.email) return;
     setLoading(true);
-    fetch(`http://localhost:3001/intraday-entries?userEmail=${user.email}`)
+    fetch(`https://mims-backend-x0i3.onrender.com/intraday-entries?userEmail=${user.email}`)
       .then(res => res.json())
       .then(data => {
         setEntries(data);
