@@ -15,7 +15,7 @@ const MyTrades = () => {
 	useEffect(() => {
 		if (!user?.email) return;
 		setLoading(true);
-		fetch(`https://mims-backend-x0i3.onrender.com/intraday-entries?userEmail=${user.email}`)
+		fetch(`http://localhost:3001/intraday-entries?userEmail=${user.email}`)
 			.then(res => res.json())
 			.then(data => {
 				setEntries(data);
@@ -28,7 +28,7 @@ const MyTrades = () => {
 		if (!window.confirm("Delete this entry?")) return;
 		setMessage("");
 		try {
-			const res = await fetch(`https://mims-backend-x0i3.onrender.com/intraday-entry/${id}`, { method: "DELETE" });
+			const res = await fetch(`http://localhost:3001/intraday-entry/${id}`, { method: "DELETE" });
 			const data = await res.json();
 			setEntries(entries.filter(e => e._id !== id));
 			setMessage(data.message || "Deleted");
@@ -52,7 +52,7 @@ const MyTrades = () => {
 		e.preventDefault();
 		setMessage("");
 		try {
-			const res = await fetch(`https://mims-backend-x0i3.onrender.com/intraday-entry/${editId}`, {
+			const res = await fetch(`http://localhost:3001/intraday-entry/${editId}`, {
 				method: "PUT",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify(editData)

@@ -15,8 +15,8 @@ const Signup = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     axios
-      .post(`https://mims-backend-x0i3.onrender.com/register`, { name, email, password })
-      .then(() => navigate("/"))
+      .post(`http://localhost:3001/register`, { name, email, password })
+      .then(() => navigate("/login"))
       .catch((err) => console.error(err));
   };
 
@@ -90,7 +90,7 @@ const Signup = () => {
             <p>
               Already have an account?
               <Link
-                to="/"
+                to="/login"
                 className="ml-2 text-blue-600 font-semibold hover:underline"
               >
                 Login

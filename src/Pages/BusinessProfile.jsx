@@ -59,7 +59,7 @@ const BusinessProfile = () => {
       setLoading(true);
       setMessage("");
 
-      const response = await fetch("https://mims-backend-x0i3.onrender.com/business-profile", {
+      const response = await fetch("http://localhost:3001/business-profile", {
         method: "POST",
         body: formData,
       });
