@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../../Context/AuthContext";
 import { ThemeContext } from "../../Context/ThemeContext";
-import AdminLayout from "../../Components/AdminLayout";
+import Layout from "../../Components/Layout";
 import { Bar, Doughnut, Line } from "react-chartjs-2";
 import Spinner from "../../Components/Spinner";
 import {
@@ -107,7 +107,7 @@ const Portfolio = () => {
   };
 
   return (
-    <AdminLayout>
+    <Layout>
 
       <Seo
         title="Portfolio | easyinventory"
@@ -169,7 +169,7 @@ const Portfolio = () => {
           </>
         )}
       </div>
-    </AdminLayout>
+    </Layout>
   );
 };
 

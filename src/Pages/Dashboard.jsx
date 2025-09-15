@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../Context/AuthContext";
 import axios from "axios";
-import AdminLayout from "../Components/AdminLayout";
+import Layout from "../Components/Layout";
 import { Link } from "react-router-dom";
 import {
   MdShoppingCart,
@@ -17,7 +17,7 @@ import { Helmet } from "react-helmet-async";
 import Seo from "../Components/Seo";
 
 
-const AdminDashboard = () => {
+const Dashboard = () => {
   const [summaryData, setSummaryData] = useState({
     totalRevenue: 0,
     monthlyRevenue: 0,
@@ -129,7 +129,7 @@ const AdminDashboard = () => {
   }, [businessProfile]);
 
   return (
-    <AdminLayout>
+    <Layout>
 
       <Seo
         title="Dashboard | easyinventory"
@@ -296,8 +296,8 @@ const AdminDashboard = () => {
 
 
       </div>
-    </AdminLayout>
+    </Layout>
   );
 };
 
-export default AdminDashboard;
+export default Dashboard;

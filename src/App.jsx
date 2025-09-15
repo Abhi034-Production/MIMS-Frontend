@@ -15,15 +15,19 @@ import BusinessDetail from './Pages/BusinessDetail'
 import NewEntry from './Category/Share_Market/NewEntry';
 import MyTrades from './Category/Share_Market/MyTrades'
 import Portfolio from './Category/Share_Market/Portfolio'
-import AdminLayout from './Components/AdminLayout'
+import Layout from './Components/Layout'
+import Home from './Components/Home'
 
 
-const AdminDashboard = lazy(() => import('./Pages/AdminDashboard'))
+const Dashboard = lazy(() => import('./Pages/Dashboard'))
 const Inventory = lazy(() => import('./Pages/Inventory'))
 const Billing = lazy(() => import('./Pages/Billing'))
 const Orders = lazy(() => import('./Pages/Orders'))
 const Report = lazy(() => import('./Pages/Report'))
 const Settings = lazy(() => import('./Pages/Settings'))
+
+//    https://mims-backend-x0i3.onrender.com
+//    https://mims-backend-x0i3.onrender.com
 
 
 function App() {
@@ -34,12 +38,13 @@ function App() {
         <Suspense fallback={<Loading />}>
           <AuthProvider>
             <Routes>
-              <Route path="/" element={<Login />} />
+          
+              <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               {/* Protected Routes */}
               <Route element={<PrivateRoute />}>  
-                <Route path="/main" element={<AdminLayout />} />
-                <Route path="/home" element={<AdminDashboard />} />
+                <Route path="/main" element={<Layout />} />
+                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path='inventory' element={<Inventory />} />
                 <Route path='billing' element={<Billing />} />
                 <Route path='orders' element={<Orders />} />
@@ -53,7 +58,8 @@ function App() {
                 <Route path='my-trades' element={<MyTrades />} />
                 <Route path='portfolio' element={<Portfolio />} />
               </Route>
-              <Route path='*' element={<NotFound />} />
+              <Route path='*' element={<NotFound />} />              
+              <Route path="/" element={<Home />} />
             </Routes>
           </AuthProvider>
         </Suspense>

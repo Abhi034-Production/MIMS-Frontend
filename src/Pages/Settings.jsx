@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import AdminLayout from "../Components/AdminLayout";
+import Layout from "../Components/Layout";
 import { Link, useNavigate } from "react-router-dom";
 import { MdOutlineHome } from "react-icons/md";
 import { ToastContainer, toast } from "react-toastify";
@@ -50,7 +50,7 @@ const Settings = () => {
   };
 
   return (
-    <AdminLayout>
+    <Layout>
 
       <Seo
         title="Settings | easyinventory"
@@ -122,7 +122,7 @@ const Settings = () => {
         </div>
         <ToastContainer />
       </div>
-    </AdminLayout>
+    </Layout>
   );
 };
 

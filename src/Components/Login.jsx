@@ -61,7 +61,7 @@ const Login = () => {
             validateStatus: (status) => status === 200 || status === 404
           });
           if (checkProfile.status === 200 && checkProfile.data.status === "success") {
-            navigate("/home");
+            navigate("/dashboard");
           } else {
             navigate("/business-profile");
           }
@@ -98,7 +98,7 @@ const Login = () => {
           validateStatus: (status) => status === 200 || status === 404
         });
         if (checkProfile.status === 200 && checkProfile.data.status === "success") {
-          navigate("/home");
+          navigate("/dashboard");
         } else {
           navigate("/business-profile");
         }

@@ -5,7 +5,7 @@ import { AuthContext } from "../Context/AuthContext";
 import axios from "axios";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import AdminLayout from "../Components/AdminLayout";
+import Layout from "../Components/Layout";
 import { Link } from "react-router-dom";
 import { MdFileDownload, MdSearch, MdOutlineHome } from "react-icons/md";
 import { Helmet } from "react-helmet-async";
@@ -165,7 +165,7 @@ const Orders = () => {
   const totalPages = Math.ceil(filteredBills.length / ordersPerPage);
 
   return (
-    <AdminLayout>
+    <Layout>
 
       <Seo
         title="Orders | easyinventory"
@@ -377,7 +377,7 @@ const Orders = () => {
           </div>
         )}
       </div>
-    </AdminLayout>
+    </Layout>
   );
 };
 

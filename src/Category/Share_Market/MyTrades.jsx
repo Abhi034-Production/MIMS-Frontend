@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../../Context/AuthContext";
-import AdminLayout from "../../Components/AdminLayout";
+import Layout from "../../Components/Layout";
 import Spinner from "../../Components/Spinner";
 import Seo from "../../Components/Seo";
 
@@ -66,10 +66,10 @@ const MyTrades = () => {
 		}
 	};
 
-	if (loading) return <AdminLayout><div className="py-10 text-center"><Spinner /></div></AdminLayout>;
+	if (loading) return <Layout><div className="py-10 text-center"><Spinner /></div></Layout>;
 
 	return (
-		<AdminLayout>
+		<Layout>
 
 
 			<Seo
@@ -230,7 +230,7 @@ const MyTrades = () => {
 					</div>
 				)}
 			</div>
-		</AdminLayout>
+		</Layout>
 	);
 };
 

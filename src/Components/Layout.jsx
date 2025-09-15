@@ -5,7 +5,7 @@ import { MdDashboard, MdInventory, MdMoney, MdList, MdLogout, MdOutlineClose, Md
 import { TbListDetails } from "react-icons/tb";
 import { BiSolidReport } from "react-icons/bi";
 
-const AdminLayout = ({ children }) => {
+const Layout = ({ children }) => {
     const location = useLocation();
     const { user, logout } = useContext(AuthContext);
     const [businessName, setBusinessName] = useState("");
@@ -13,7 +13,7 @@ const AdminLayout = ({ children }) => {
     const [businessCategory, setBusinessCategory] = useState("");
 
     const Nav_Links = [
-        { label: 'Dashboard', to: '/home', icon: <MdDashboard /> },
+        { label: 'Dashboard', to: '/dashboard', icon: <MdDashboard /> },
         { label: 'Inventory', to: '/inventory', icon: <MdInventory /> },
         { label: 'Billing', to: '/billing', icon: <MdMoney /> },
         { label: 'Orders', to: '/orders', icon: <MdList /> },
@@ -224,4 +224,4 @@ const AdminLayout = ({ children }) => {
     );
 };
 
-export default AdminLayout;
+export default Layout;

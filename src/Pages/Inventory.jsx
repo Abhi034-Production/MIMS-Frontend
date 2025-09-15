@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useContext } from "react";
 import { AuthContext } from "../Context/AuthContext";
-import AdminLayout from "../Components/AdminLayout";
+import Layout from "../Components/Layout";
 import axios from "axios";
 import { ToastContainer, toast } from 'react-toastify';
 import { Link } from "react-router-dom";
@@ -87,7 +87,7 @@ const Inventory = () => {
   };
 
   return (
-    <AdminLayout>
+    <Layout>
 
       <Seo
         title="Inventory | easyinventory"
@@ -246,7 +246,7 @@ const Inventory = () => {
 
         <ToastContainer />
       </div>
-    </AdminLayout>
+    </Layout>
   );
 };
 

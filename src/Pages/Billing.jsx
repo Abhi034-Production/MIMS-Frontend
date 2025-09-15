@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { AuthContext } from "../Context/AuthContext";
 import axios from "axios";
-import AdminLayout from "../Components/AdminLayout";
+import Layout from "../Components/Layout";
 import { Link } from "react-router-dom";
 import { ToastContainer, toast } from 'react-toastify';
 import { MdOutlineHome, MdFileDownload } from 'react-icons/md';
@@ -325,7 +325,7 @@ const Billing = () => {
   };
 
   return (
-    <AdminLayout>
+    <Layout>
 
       <Seo
         title="Billing | easyinventory"
@@ -809,7 +809,7 @@ const Billing = () => {
 
         <ToastContainer />
       </div>
-    </AdminLayout>
+    </Layout>
 
   );
 };

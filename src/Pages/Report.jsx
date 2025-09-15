@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import AdminLayout from "../Components/AdminLayout";
+import Layout from "../Components/Layout";
 import axios from "axios";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -192,11 +192,11 @@ const Report = () => {
     });
   };
 
-  if (loading) return <AdminLayout><div className="text-center py-10"><Spinner /></div></AdminLayout>;
+  if (loading) return <Layout><div className="text-center py-10"><Spinner /></div></Layout>;
 
   return (
     <>
-      <AdminLayout>
+      <Layout>
 
         <Seo
           title="Reports | easyinventory"
@@ -450,7 +450,7 @@ const Report = () => {
           </table>
         </div> */}
         </div>
-      </AdminLayout>
+      </Layout>
     </>
   );
 };

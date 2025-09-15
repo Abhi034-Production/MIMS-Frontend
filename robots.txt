@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://easyinventory.online/sitemap.xml

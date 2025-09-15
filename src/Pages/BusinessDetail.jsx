@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext, useRef } from "react";
-import AdminLayout from "../Components/AdminLayout";
+import Layout from "../Components/Layout";
 import { AuthContext } from "../Context/AuthContext";
 import { Link } from "react-router-dom";
 import { MdOutlineHome, MdFileDownload } from 'react-icons/md';
@@ -88,11 +88,11 @@ const BusinessDetail = () => {
     }
   };
 
-  if (loading) return <AdminLayout> <div className="text-center py-10"><Spinner /></div></AdminLayout>;
-  if (!profile) return <AdminLayout> <div className="text-center py-10 text-red-500">No business profile found.</div></AdminLayout>;
+  if (loading) return <Layout> <div className="text-center py-10"><Spinner /></div></Layout>;
+  if (!profile) return <Layout> <div className="text-center py-10 text-red-500">No business profile found.</div></Layout>;
 
   return (
-    <AdminLayout>
+    <Layout>
 
       <Seo
         title="Business Details | easyinventory"
@@ -212,7 +212,7 @@ const BusinessDetail = () => {
           </div>
         )}
       </div>
-    </AdminLayout>
+    </Layout>
   );
 };
 
